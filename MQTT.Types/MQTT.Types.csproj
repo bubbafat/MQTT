@@ -47,6 +47,7 @@
     <Compile Include="Factory.cs" />
     <Compile Include="FixedHeader.cs" />
     <Compile Include="MessageId.cs" />
+    <Compile Include="MessageIdSequence.cs" />
     <Compile Include="MQString.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QualityOfService.cs" />

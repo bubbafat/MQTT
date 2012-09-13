@@ -11,7 +11,7 @@ namespace MQTT.Client.Commands
     {
         List<string> _topics = new List<string>();
 
-        public Subscribe(string[] topics)
+        public Subscribe(string[] topics, MessageId messageId)
             : this(new FixedHeader(CommandMessage.SUBSCRIBE), null)
         {
             this.Header.QualityOfService = QualityOfService.AtLeastOnce;
@@ -20,6 +20,8 @@ namespace MQTT.Client.Commands
             {
                 _topics.AddRange(topics);
             }
+
+            MessageId = messageId;
         }
 
         protected override byte[] VariableHeader

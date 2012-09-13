@@ -9,22 +9,31 @@ namespace MQTT.Client.Commands
 {
     public class PubAck : ClientCommand
     {
-        public PubAck(ushort messageId)
-            : this(new FixedHeader(CommandMessage.PUBACK), null)
+        public PubAck(MessageId messageId)
+            : base(new FixedHeader(CommandMessage.PUBACK))
         {
-            MessageId = new MessageId(messageId);
+            MessageId = messageId;
+        }
+
+        protected override byte[] VariableHeader
+        {
+            get
+            {
+                return MessageId.ToByteArray();
+            }
         }
 
         public PubAck(FixedHeader header, byte[] data)
             : base(header)
         {
-            if (header.QualityOfService == QualityOfService.AtLeastOnce ||
-                header.QualityOfService == QualityOfService.ExactlyOnce)
+            if (header.RemainingLength != 2 && data.Length != 2)
             {
-                using (MemoryStream stream = new MemoryStream(data))
-                {
-                    MessageId = MessageId.FromStream(stream);
-                }
+                throw new ProtocolException(this.CommandMessage, "Remaining length must be 2");
+            }
+
+            using (MemoryStream stream = new MemoryStream(data))
+            {
+                MessageId = MessageId.FromStream(stream);
             }
         }
     }

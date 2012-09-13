@@ -47,6 +47,7 @@
     <Compile Include="PingReq.cs" />
     <Compile Include="PingResp.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ProtocolException.cs" />
     <Compile Include="PubAck.cs" />
     <Compile Include="PubComp.cs" />
     <Compile Include="Publish.cs" />

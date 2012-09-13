@@ -10,80 +10,121 @@ using System.Timers;
 
 namespace MQTT.Client
 {
-    public class Client
+    public delegate void UnsolicitedMessageCallback(object sender, ClientCommandEventArgs e);
+
+    public sealed class Client : IDisposable
     {
         string _clientId;
         IMqttBroker _broker;
         Timer _timer;
+        StateMachineManager _manager;
+        bool _connAcked = false;
+        MessageIdSequence _idSeq = new MessageIdSequence();
+        private object _lastHeaderLock = new object();
+        private DateTime _lastHeard = DateTime.MinValue;
 
         public Client(string clientId)
         {
-            _clientId = clientId;
             _broker = Factory.GetInstance<IMqttBroker>();
+            _broker.OnMessageReceived += new MessageReceivedCallback(_broker_OnMessageReceived);
+            _manager = new StateMachineManager(_broker);
+            _clientId = clientId;
         }
 
         public Task Connect(IPEndPoint endpoint)
         {
-            ResetTimer();
+            _connAcked = false;
             _broker.Connect(endpoint);
-            return _broker.SendCommandAsync(new Commands.Connect(_clientId, 300));
+
+            ConnectFlow connect = new ConnectFlow(_manager);
+            return connect.Start(new Commands.Connect(_clientId, 300),
+                (startCmd) =>
+                {
+                    ResetTimer();
+                    _connAcked = true;
+                });
         }
 
         public void Disconnect(TimeSpan lengthBeforeForce)
         {
-            _broker.SendCommandAsync(new Commands.Disconnect()).Wait(lengthBeforeForce);
+            _broker.Send(new Commands.Disconnect()).Wait(lengthBeforeForce);
             _broker.Disconnect();
         }
 
-        public Task Publish(string topic, string message)
+        public Task Publish(string topic, string message, QualityOfService qos, Action<ClientCommand> completed)
         {
             Publish pub = new Commands.Publish(topic, message);
-            pub.Header.QualityOfService = QualityOfService.AtLeastOnce;
-            return _broker.SendCommandAsync(pub);
-        }
+            pub.Header.QualityOfService = qos;
+            if (qos != QualityOfService.AtMostOnce)
+            {
+                pub.MessageId = _idSeq.Next();
+            }
 
-        public Task PubAck(ushort messageId)
-        {
-            return _broker.SendCommandAsync(new Commands.PubAck(messageId));
-        }
-
-        public Task PubRel(ushort messageId)
-        {
-            return _broker.SendCommandAsync(new Commands.PubRel(messageId));
-        }
-
-        public Task PubComp(ushort messageId)
-        {
-            return _broker.SendCommandAsync(new Commands.PubComp(messageId));
-        }
-
-        public Task Ping()
-        {
-            return _broker.SendCommandAsync(new Commands.PingReq());
+            PublishSendFlow publish = new PublishSendFlow(_manager);
+            return publish.Start(pub, completed);
         }
 
         public Task Subscribe(string[] topics)
         {
-            Subscribe s = new Commands.Subscribe(topics);
-            s.MessageId.Value = 50;
-            return _broker.SendCommandAsync(s);
+            Subscribe s = new Commands.Subscribe(topics, _idSeq.Next());
+            return _broker.Send(s);
         }
 
         public Task Unsubscribe(string[] topics)
         {
-            return _broker.SendCommandAsync(new Commands.Unsubscribe(topics));
-        }
-
-        public Task<ClientCommand> Receive()
-        {
-            return _broker.ReceiveAsync();
+            return _broker.Send(new Commands.Unsubscribe(topics));
         }
 
         public bool IsConnected
         {
             get
             {
-                return _broker.IsConnected;
+                return _broker.IsConnected && _connAcked;
+            }
+        }
+
+        public event UnsolicitedMessageCallback OnUnsolicitedMessage;
+
+        void _broker_OnMessageReceived(object sender, ClientCommandEventArgs e)
+        {
+            ClientCommand command = e.Command;
+
+            System.Diagnostics.Debug.WriteLine("RECV: {0} ({1})", command.CommandMessage, command.MessageId);
+
+            lock (_lastHeaderLock)
+            {
+                _lastHeard = DateTime.UtcNow;
+            }
+
+            switch (command.CommandMessage)
+            {
+                case CommandMessage.PUBACK:
+                case CommandMessage.PUBCOMP:
+                case CommandMessage.PUBREC:
+                case CommandMessage.PUBREL:
+                case CommandMessage.SUBACK:
+                case CommandMessage.CONNACK:
+                case CommandMessage.UNSUBACK:
+                    _manager.Deliver(command);
+                    break;
+                case CommandMessage.PINGRESP:
+                    // ignore (we sent it) - eventually track
+                    break;
+                default:
+                    _manager.StartNew(command, (ClientCommand cmd) =>
+                        {
+                            notify(cmd);
+                        });
+                    break;
+            }
+        }
+
+        private void notify(ClientCommand command)
+        {
+            UnsolicitedMessageCallback callback = OnUnsolicitedMessage;
+            if (callback != null)
+            {
+                callback(this, new ClientCommandEventArgs(command));
             }
         }
 
@@ -97,10 +138,19 @@ namespace MQTT.Client
 
         void _timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (IsConnected)
+            lock (_lastHeaderLock)
             {
-                Ping();
+                if (IsConnected && _lastHeard < DateTime.UtcNow.AddMinutes(4))
+                {
+                    _broker.Send(new Commands.PingReq());
+                }
             }
+        }
+
+        public void Dispose()
+        {
+            using (_timer) { }
+            using (_broker) { }
         }
     }
 }

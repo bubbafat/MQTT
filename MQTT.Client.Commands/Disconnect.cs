@@ -18,7 +18,7 @@ namespace MQTT.Client.Commands
         {
             if (header.RemainingLength != 0)
             {
-                throw new InvalidOperationException("Disconnect does not have any payload data");
+                throw new ProtocolException(CommandMessage, "Disconnect does not have any payload data");
             }
         }
     }

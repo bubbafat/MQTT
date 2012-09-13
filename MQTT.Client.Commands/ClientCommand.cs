@@ -11,7 +11,7 @@ namespace MQTT.Client.Commands
     {
         protected ClientCommand(FixedHeader header)
         {
-            MessageId = new Types.MessageId(0);
+            MessageId = MessageId.Any;
             Header = header;
         }
 
@@ -80,7 +80,7 @@ namespace MQTT.Client.Commands
         public MessageId MessageId
         {
             get;
-            protected set;
+            set;
         }
 
         public static ClientCommand Create(FixedHeader header, byte[] data)

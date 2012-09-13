@@ -22,12 +22,12 @@ namespace MQTT.Client.Commands
             {
                 if (header.RemainingLength != data.Length)
                 {
-                    throw new InvalidOperationException("The declared and actual data lengths did not match");
+                    throw new ProtocolException(CommandMessage, "The declared and actual data lengths did not match");
                 }
 
                 if (header.RemainingLength != 2)
                 {
-                    throw new InvalidOperationException("The declared data length must be 2");
+                    throw new ProtocolException(CommandMessage, "The declared data length must be 2");
                 }
 
                 Result = (ConnectionAckResult)data[1];

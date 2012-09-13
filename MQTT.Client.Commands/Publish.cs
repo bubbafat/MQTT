@@ -63,6 +63,13 @@ namespace MQTT.Client.Commands
                 using(MemoryStream stream = new MemoryStream(data))
                 {
                     Topic = MQString.FromStream(stream);
+
+                    if (Header.QualityOfService == QualityOfService.AtLeastOnce ||
+                        Header.QualityOfService == QualityOfService.ExactlyOnce)
+                    {
+                        MessageId = MessageId.FromStream(stream);
+                    }
+
                     if (stream.Position < stream.Length)
                     {
                         Message = stream.ReadRest();

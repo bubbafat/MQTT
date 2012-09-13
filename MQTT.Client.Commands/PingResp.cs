@@ -18,7 +18,7 @@ namespace MQTT.Client.Commands
         {
             if (header.RemainingLength != 0)
             {
-                throw new InvalidOperationException("PingResp does not have any payload data");
+                throw new ProtocolException(CommandMessage, "PingResp does not have any payload data");
             }
         }
     }

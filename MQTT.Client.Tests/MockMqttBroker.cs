@@ -6,6 +6,7 @@ using MQTT.Client.Commands;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Threading;
+using MQTT.Types;
 
 namespace MQTT.Client.Tests
 {
@@ -24,7 +25,7 @@ namespace MQTT.Client.Tests
             _connected = false;
         }
 
-        public Task SendCommandAsync(ClientCommand command)
+        public Task Send(ClientCommand command)
         {
             return Task.Factory.StartNew(() =>
                 {
@@ -32,7 +33,7 @@ namespace MQTT.Client.Tests
                 });
         }
 
-        public Task<ClientCommand> ReceiveAsync()
+        public Task<ClientCommand> ReceiveUnsolicited()
         {
             return Task<ClientCommand>.Factory.StartNew(() =>
                 {
@@ -41,7 +42,6 @@ namespace MQTT.Client.Tests
                         ClientCommand cmd;
                         if (_incoming.TryDequeue(out cmd))
                         {
-                            LastHeard = DateTime.UtcNow;
                             return cmd;
                         }
 
@@ -53,12 +53,6 @@ namespace MQTT.Client.Tests
         public bool IsConnected
         {
             get { return _connected; }
-        }
-
-        public DateTime LastHeard
-        {
-            get;
-            private set;
         }
 
         private void EnqueueResponse(ClientCommand command)
@@ -80,5 +74,13 @@ namespace MQTT.Client.Tests
         {
             // nothing
         }
+
+        public Task<ClientCommand> WaitForCommand(CommandMessage message, MessageId messageId, TimeSpan timeout)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public event MessageReceivedCallback OnMessageReceived;
     }
 }

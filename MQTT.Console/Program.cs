@@ -38,168 +38,61 @@ namespace MQTT.ConsoleApp
                 });
 
             Thread listener = new Thread(() =>
-            {
-                MQTT.Client.Client c = new Client.Client("mosquito/bubbafat");
-                IPEndPoint test = new IPEndPoint(Dns.GetHostAddresses("test.mosquitto.org")[0], 1883);
-                DemandWorked(c.Connect(test));
-
-                Task<ClientCommand> response = c.Receive();
-                DemandWorked(response);
-                DemandWorked(c.Subscribe(new string[] { "#", }));
-
-                try
                 {
-                    long received = 0;
-                    while (true)
-                    {
-                        response = c.Receive();
-                        DemandWorked(response);
-                        if (response.Result.CommandMessage == CommandMessage.PUBLISH)
-                        {
-                            if (!response.Result.Header.Retain)
-                            {
-                                if (!(response.Result as Publish).Topic.Contains("radiovis"))
-                                {
-                                    received++;
-
-                                    Console.WriteLine("[{0} : {1}] RECV: ", received, DateTime.Now.ToString());
-                                    Console.WriteLine((response.Result as Publish).Topic);
-
-                                    foreach (char ch in Encoding.ASCII.GetChars((response.Result as Publish).Message))
-                                    {
-                                        if (char.IsControl(ch))
-                                        {
-                                            Console.Write("?");
-                                        }
-                                        else
-                                        {
-                                            Console.Write(ch);
-                                        }
-                                    }
-
-                                    Console.WriteLine();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine(response.Result.CommandMessage);
-                        }
-                    }
-                }
-                finally
-                {
-                    c.Disconnect(TimeSpan.FromSeconds(5));
-                }
-            });
-
-
-            Thread ping = new Thread(() =>
-                {
-                    MQTT.Client.Client c = new Client.Client("mosquito/bubbafatping");
-                    IPEndPoint test = new IPEndPoint(Dns.GetHostAddresses("test.mosquitto.org")[0], 1883);
-                    DemandWorked(c.Connect(test));
-
-                    Task<ClientCommand> response = c.Receive();
-                    DemandWorked(response);
-
-                    DemandWorked(c.Subscribe(new string[] { "bubbafat/pong", }));
-
-                    int sent = 0;
-                    while(true)
-                    {
-                        if (sent++ < 5)
-                        {
-                            DemandWorked(c.Publish("bubbafat/ping", "ping"));
-                        }
-
-                        response = c.Receive();
-                        DemandWorked(response);
-                        if (response.Result.CommandMessage == CommandMessage.PUBLISH)
-                        {
-                            if (response.Result.Header.Duplicate)
-                            {
-                                Console.WriteLine("DUPLICATE!!!!!!!!!!!!!!!!");
-                            }
-
-                            Console.WriteLine("RECV: {0}", (response.Result as Publish).Message);
-                        }
-                        else if (response.Result.CommandMessage == CommandMessage.SUBACK)
-                        {
-                            SubAck ack = (SubAck)response.Result;
-                            foreach (QualityOfService qos in ack.Grants)
-                            {
-                                Console.WriteLine("Grants: {0}", qos);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine(response.Result.CommandMessage);
-                        }
-                    }
-
-                    c.Disconnect(TimeSpan.FromSeconds(5));
+                    ThreadAction();
                 });
-
-            Thread pong = new Thread(() =>
-            {
-                MQTT.Client.Client c = new Client.Client("mosquito/bubbafatpong");
-                IPEndPoint test = new IPEndPoint(Dns.GetHostAddresses("test.mosquitto.org")[0], 1883);
-                DemandWorked(c.Connect(test));
-
-                Task<ClientCommand> response = c.Receive();
-                DemandWorked(response);
-
-                DemandWorked(c.Subscribe(new string[] { "bubbafat/ping", }));
-
-                int sent = 0;
-                while(true)
-                {
-                    if (sent++ < 5)
-                    {
-                        DemandWorked(c.Publish("bubbafat/pong", "pong"));
-                    }
-                    response = c.Receive();
-                    DemandWorked(response);
-                    if (response.Result.CommandMessage == CommandMessage.PUBLISH)
-                    {
-                        if (response.Result.Header.Duplicate)
-                        {
-                            Console.WriteLine("DUPLICATE!!!!!!!!!!!!!!!!");
-                        }
-
-                        Console.WriteLine("RECV: {0}", (response.Result as Publish).Message);
-                    }
-                    else if (response.Result.CommandMessage == CommandMessage.SUBACK)
-                    {
-                        SubAck ack = (SubAck)response.Result;
-                        foreach (QualityOfService qos in ack.Grants)
-                        {
-                            Console.WriteLine("Grants: {0}", qos);
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine(response.Result.CommandMessage);
-                    }
-                    Thread.Sleep(500);
-                }
-
-                c.Disconnect(TimeSpan.FromSeconds(5));
-            });
 
             Console.WriteLine("STARTING...");
 
-            //listener.Start();
-            //listener.Join();
-
-            ping.Start();
-            pong.Start();
-
-            ping.Join();
-            pong.Join();
+            listener.Start();
+            listener.Join();
 
             Console.WriteLine("DONE");
+        }
+
+        private static void ThreadAction()
+        {
+            using (MQTT.Client.Client c = new Client.Client("mosquito/bubbafat"))
+            {
+                c.OnUnsolicitedMessage += new UnsolicitedMessageCallback(c_OnUnsolicitedMessage);
+
+                IPEndPoint test = new IPEndPoint(Dns.GetHostAddresses("test.mosquitto.org")[0], 1883);
+
+                DemandWorked(c.Connect(test));
+                DemandWorked(c.Subscribe(new string[] { "#" }));
+
+                while (true)
+                {
+                    Thread.Sleep(1000);
+                }
+
+                c.Disconnect(TimeSpan.FromSeconds(5));
+            }
+        }
+
+        static void c_OnUnsolicitedMessage(object sender, ClientCommandEventArgs e)
+        {
+            ClientCommand command = e.Command;
+
+            Publish p = command as Publish;
+            if (p != null)
+            {
+                if (p.Header.Duplicate)
+                {
+                    Console.WriteLine("!!! DUPLICATE !!!");
+                }
+
+                Console.WriteLine("{0}", p.Topic);
+                foreach (char c in Encoding.ASCII.GetChars(p.Message))
+                {
+                    if (!char.IsControl(c))
+                    {
+                        Console.Write(c);
+                    }
+                }
+
+                Console.WriteLine();
+            }
         }
     }
 }

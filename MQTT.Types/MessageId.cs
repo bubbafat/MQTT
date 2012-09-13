@@ -6,7 +6,7 @@ using System.IO;
 
 namespace MQTT.Types
 {
-    public class MessageId
+    public class MessageId : IComparable<MessageId>
     {
         public MessageId(ushort value)
         {
@@ -16,7 +16,7 @@ namespace MQTT.Types
         public ushort Value
         {
             get;
-            set;
+            private set;
         }
 
         public byte[] ToByteArray()
@@ -31,5 +31,48 @@ namespace MQTT.Types
         {
             return new MessageId(stream.ReadUint16());
         }
+
+        public int CompareTo(MessageId other)
+        {
+            return Value.CompareTo(other.Value);
+        }
+
+        public static bool operator ==(MessageId id1, MessageId id2)
+        {
+            return id1.Value == id2.Value;
+        }
+
+        public static bool operator !=(MessageId id1, MessageId id2)
+        {
+            return id1.Value != id2.Value;
+        }
+
+        public override string ToString()
+        {
+            return Value.ToString();
+        }
+
+        public override int GetHashCode()
+        {
+            return Value.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+            {
+                return false;
+            }
+
+            MessageId id = obj as MessageId;
+            if (id == null)
+            {
+                return false;
+            }
+
+            return id.Value == Value;
+        }
+
+        public static readonly MessageId Any = new MessageId(0);
     }
 }

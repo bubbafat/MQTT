@@ -21,11 +21,6 @@ namespace MQTT.Client.Commands
         {
             if (data != null)
             {
-                if (header.RemainingLength != data.Length)
-                {
-                    throw new InvalidOperationException("The declared and actual data lengths did not match");
-                }
-
                 using (MemoryStream stream = new MemoryStream(data))
                 {
                     Details = V3ConnectVariableHeader.FromStream(stream);
@@ -126,12 +121,6 @@ namespace MQTT.Client.Commands
         {
             get;
             set;
-        }
-        
-        public ushort KeepAlive 
-        {
-            get { return Details.KeepAliveTimer; }
-            set { Details.KeepAliveTimer = value; }
         }
     }
 

@@ -26,5 +26,13 @@ namespace MQTT.Types
 
             return bytes.ToArray();
         }
+
+        public static string FromBytes(byte[] bytes)
+        {
+            using (MemoryStream s = new MemoryStream(bytes))
+            {
+                return FromStream(s);
+            }
+        }
     }
 }
