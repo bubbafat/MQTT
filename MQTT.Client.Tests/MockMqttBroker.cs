@@ -21,6 +21,11 @@ namespace MQTT.Client.Tests
             _connected = true;
         }
 
+        public void Listen(System.Net.IPEndPoint endpoint)
+        {
+            _connected = true;
+        }
+
         public void Disconnect()
         {
             _connected = false;

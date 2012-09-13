@@ -7,11 +7,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQTT.Client", "MQTT.Client\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQTT.Client.Tests", "MQTT.Client.Tests\MQTT.Client.Tests.csproj", "{4F970DC6-384D-4782-A7AC-8FC4B40053BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQTT.Console", "MQTT.Console\MQTT.Console.csproj", "{F94226B3-175D-46C6-89F4-CD5A4CA89030}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQTT.Client.Console", "MQTT.Console\MQTT.Client.Console.csproj", "{F94226B3-175D-46C6-89F4-CD5A4CA89030}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQTT.Client.Commands", "MQTT.Client.Commands\MQTT.Client.Commands.csproj", "{5785076C-CD22-4D94-9E9B-F11249171F37}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQTT.Domain", "MQTT.Domain\MQTT.Domain.csproj", "{B4B1A948-5CAF-4D58-B655-C023D5D59ABF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQTT.Broker", "MQTT.Broker\MQTT.Broker.csproj", "{118C0343-D596-4DCB-BE69-D0D54A00FF33}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mqtt-broker", "mqtt-broker\mqtt-broker.csproj", "{95F9CB76-1122-4245-8B3E-F7088901D094}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,6 +87,26 @@ Global
 		{B4B1A948-5CAF-4D58-B655-C023D5D59ABF}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{B4B1A948-5CAF-4D58-B655-C023D5D59ABF}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{B4B1A948-5CAF-4D58-B655-C023D5D59ABF}.Release|x86.ActiveCfg = Release|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Release|Any CPU.Build.0 = Release|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{118C0343-D596-4DCB-BE69-D0D54A00FF33}.Release|x86.ActiveCfg = Release|Any CPU
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Debug|x86.ActiveCfg = Debug|x86
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Debug|x86.Build.0 = Debug|x86
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Release|Any CPU.ActiveCfg = Release|x86
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Release|Mixed Platforms.Build.0 = Release|x86
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Release|x86.ActiveCfg = Release|x86
+		{95F9CB76-1122-4245-8B3E-F7088901D094}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

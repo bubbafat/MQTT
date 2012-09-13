@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{B4B1A948-5CAF-4D58-B655-C023D5D59ABF}</ProjectGuid>
+    <ProjectGuid>{118C0343-D596-4DCB-BE69-D0D54A00FF33}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MQTT.Domain</RootNamespace>
-    <AssemblyName>MQTT.Domain</AssemblyName>
+    <RootNamespace>MQTT.Broker</RootNamespace>
+    <AssemblyName>MQTT.Broker</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,26 +40,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClientCommandEventArgs.cs" />
-    <Compile Include="DesireCache.cs" />
-    <Compile Include="IMqttBroker.cs" />
-    <Compile Include="INetworkInterface.cs" />
-    <Compile Include="MqttNetworkBroker.cs" />
-    <Compile Include="NetworkInterface.cs" />
-    <Compile Include="NewConnectionEventArgs.cs" />
+    <Compile Include="ActiveConnection.cs" />
+    <Compile Include="MqttBroker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StateMachines\ConnectReceiveFlow.cs" />
-    <Compile Include="StateMachines\StateMachineManager.cs" />
-    <Compile Include="StateMachines\ConnectSendFlow.cs" />
-    <Compile Include="StateMachines\PublishReceiveFlow.cs" />
-    <Compile Include="StateMachines\PublishSendFlow.cs" />
-    <Compile Include="StateMachines\StateMachine.cs" />
-    <Compile Include="StateMachines\SubscribeFlow.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MQTT.Client.Commands\MQTT.Client.Commands.csproj">
       <Project>{5785076C-CD22-4D94-9E9B-F11249171F37}</Project>
       <Name>MQTT.Client.Commands</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MQTT.Domain\MQTT.Domain.csproj">
+      <Project>{B4B1A948-5CAF-4D58-B655-C023D5D59ABF}</Project>
+      <Name>MQTT.Domain</Name>
     </ProjectReference>
     <ProjectReference Include="..\MQTT.Types\MQTT.Types.csproj">
       <Project>{D7E0B27D-DD60-4C87-B30D-B1AA5CBB6501}</Project>

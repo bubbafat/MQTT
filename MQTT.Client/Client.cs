@@ -66,9 +66,9 @@ namespace MQTT.Client
             return publish.Start(pub, completed);
         }
 
-        public Task Subscribe(string[] topics)
+        public Task Subscribe(Subscription[] subs)
         {
-            Subscribe s = new Commands.Subscribe(topics, _idSeq.Next());
+            Subscribe s = new Commands.Subscribe(subs, _idSeq.Next());
             return _broker.Send(s);
         }
 

@@ -13,85 +13,46 @@ namespace MQTT.Domain
 {
     public sealed class MqttNetworkBroker : IMqttBroker
     {
-        Socket _socket;
-        Thread _receiveThread;
+        NetworkInterface _network;
 
         public void Connect(System.Net.IPEndPoint endpoint)
         {
-            _socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            _socket.Connect(endpoint);
-            _receiveThread = new Thread(ReceiveLoop);
-            _receiveThread.Start();
-        }
-
-        public void Disconnect()
-        {
-            _socket.Close();
-        }
-
-        public System.Threading.Tasks.Task Send(MqttCommand command)
-        {
-            return Task.Factory.StartNew(() =>
+            Socket socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            socket.Connect(endpoint);
+            _network = new NetworkInterface(socket);
+            _network.Start((MqttCommand cmd) =>
                 {
-                    System.Diagnostics.Debug.WriteLine("SEND: {0} ({1})", command.CommandMessage, command.MessageId);
-
-                    byte[] buffer = command.ToByteArray();
-
-                    int start = 0;
-
-                    while (start < buffer.Length)
+                    MessageReceivedCallback recv = OnMessageReceived;
+                    if (recv != null)
                     {
-                        int end = buffer.Length - start;
-                        Task<int> sendResult = _socket.SendAsync(buffer, start, end);
-                        sendResult.Wait();
-                        if (sendResult.IsFaulted)
-                        {
-                            throw sendResult.Exception;
-                        }
-
-                        if (sendResult.IsCompleted)
-                        {
-                            if (sendResult.Result == 0)
-                            {
-                                throw new InvalidOperationException("Stream unexpectedly closed!");
-                            }
-
-                            start += sendResult.Result;
-                        }
+                        recv(this, new ClientCommandEventArgs(cmd));
                     }
                 });
         }
 
+        public void Disconnect()
+        {
+            _network.Disconnect();
+        }
+
+        public System.Threading.Tasks.Task Send(MqttCommand command)
+        {
+            return _network.Send(command);
+        }
+
         public bool IsConnected
         {
-            get { return _socket.Connected; }
+            get
+            {
+                return _network.IsConnected;
+            }
         }
 
         public event MessageReceivedCallback OnMessageReceived;
 
         public void Dispose()
         {
-            using (_socket) { }
-        }
-
-        private void ReceiveLoop()
-        {
-            while (true)
-            {
-                FixedHeader header = FixedHeader.FromSocket(_socket);
-                byte[] data = null;
-
-                if (header.RemainingLength > 0)
-                {
-                    data = _socket.ReadBytes(header.RemainingLength);
-                }
-
-                MessageReceivedCallback recv = OnMessageReceived;
-                if (recv != null)
-                {
-                    recv(this, new ClientCommandEventArgs(MqttCommand.Create(header, data)));
-                }
-            }
+            using (_network) { }
         }
     }
 

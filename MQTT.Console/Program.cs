@@ -14,21 +14,8 @@ namespace MQTT.ConsoleApp
 {
     class Program
     {
-        static void DemandWorked(Task task)
-        {
-            task.Wait();
-            if(task.IsFaulted)
-            {
-                Console.WriteLine(task.Exception.ToString());
-                throw task.Exception;
-            }
-
-            if(!task.IsCompleted)
-            {
-                Console.WriteLine("Task did not complete?  WTF???");
-                throw new Exception("WTF?");
-            }
-        }
+        static string server = "localhost"; // "test.mosquitto.org"
+        static int port = 1883;
 
         static void Main(string[] args)
         {
@@ -43,24 +30,58 @@ namespace MQTT.ConsoleApp
                     ThreadAction();
                 });
 
+            Thread writer = new Thread(() =>
+                {
+                    WriterAction();
+                });
+
             Console.WriteLine("STARTING...");
 
+            writer.Start();
             listener.Start();
+
+            writer.Join();
             listener.Join();
 
             Console.WriteLine("DONE");
         }
 
-        private static void ThreadAction()
+        private static void WriterAction()
         {
-            using (MQTT.Client.Client c = new MQTT.Client.Client("mosquito/bubbafat"))
+            using (MQTT.Client.Client c = new MQTT.Client.Client("writer"))
             {
                 c.OnUnsolicitedMessage += new UnsolicitedMessageCallback(c_OnUnsolicitedMessage);
 
-                IPEndPoint test = new IPEndPoint(Dns.GetHostAddresses("test.mosquitto.org")[0], 1883);
+                IPAddress address = Dns.GetHostAddresses(server).Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).First();
+                IPEndPoint test = new IPEndPoint(address, port);
 
                 DemandWorked(c.Connect(test));
-                DemandWorked(c.Subscribe(new string[] { "#" }));
+
+                while (true)
+                {
+                    Thread.Sleep(5000);
+                    c.Publish("root", "This is the message!", QualityOfService.AtMostOnce, null);
+                }
+
+                c.Disconnect(TimeSpan.FromSeconds(5));
+            }
+        }
+
+        private static void ThreadAction()
+        {
+            using (MQTT.Client.Client c = new MQTT.Client.Client("listener"))
+            {
+                c.OnUnsolicitedMessage += new UnsolicitedMessageCallback(c_OnUnsolicitedMessage);
+
+                IPAddress address = Dns.GetHostAddresses(server).Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).First();
+                IPEndPoint test = new IPEndPoint(address, port);
+
+                DemandWorked(c.Connect(test));
+                DemandWorked(c.Subscribe(
+                    new Subscription[] 
+                    {
+                        new Subscription("#", QualityOfService.ExactlyOnce), 
+                    }));
 
                 while (true)
                 {
@@ -93,6 +114,22 @@ namespace MQTT.ConsoleApp
                 }
 
                 Console.WriteLine();
+            }
+        }
+
+        static void DemandWorked(Task task)
+        {
+            task.Wait();
+            if (task.IsFaulted)
+            {
+                Console.WriteLine(task.Exception.ToString());
+                throw task.Exception;
+            }
+
+            if (!task.IsCompleted)
+            {
+                Console.WriteLine("Task did not complete?  WTF???");
+                throw new Exception("WTF?");
             }
         }
     }

@@ -10,15 +10,9 @@ namespace MQTT.Domain
 {
     public delegate void MessageReceivedCallback(object sender, ClientCommandEventArgs e);
 
-    public interface IMqttBroker : IDisposable
+    public interface IMqttBroker : INetworkInterface
     {
         void Connect(IPEndPoint endpoint);
-        void Disconnect();
-
-        Task Send(MqttCommand command);
-
         event MessageReceivedCallback OnMessageReceived;
-
-        bool IsConnected { get; }
     }
 }

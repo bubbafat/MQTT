@@ -16,9 +16,9 @@ namespace MQTT.Domain.StateMachines
 
         readonly object _flowLock = new object();
 
-        IMqttBroker _broker;
+        INetworkInterface _broker;
 
-        public StateMachineManager(IMqttBroker broker)
+        public StateMachineManager(INetworkInterface broker)
         {
             _broker = broker;
         }
@@ -44,12 +44,25 @@ namespace MQTT.Domain.StateMachines
         {
             switch (command.CommandMessage)
             {
+                case CommandMessage.CONNECT:
+                    return Task.Factory.StartNew(() =>
+                    {
+                        ConnectReceiveFlow flow = new ConnectReceiveFlow(this);
+                        return flow.Start(command, onSuccess);
+                    });
                 case CommandMessage.PUBLISH:
                     return Task.Factory.StartNew(() =>
                         {
                             PublishReceiveFlow flow = new PublishReceiveFlow(this);
                             return flow.Start(command, onSuccess);
                         });
+                case CommandMessage.SUBSCRIBE:
+                    return Task.Factory.StartNew(() =>
+                    {
+                        SubscribeFlow flow = new SubscribeFlow(this);
+                        return flow.Start(command, onSuccess);
+                    });
+
                 default:
                     return Task.Factory.StartNew(() =>
                         {

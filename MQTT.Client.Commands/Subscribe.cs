@@ -7,21 +7,51 @@ using System.IO;
 
 namespace MQTT.Commands
 {
+    public class Subscription
+    {
+        public string Topic { get; private set; }
+        public QualityOfService QoS { get; private set; }
+
+        public Subscription(string topic, QualityOfService qos)
+        {
+            Topic = topic;
+            QoS = qos;
+        }
+
+        public byte[] ToByteArray()
+        {
+            List<byte> bytes = new List<byte>();
+
+            bytes.AddRange(MQString.ToByteArray(Topic));
+            bytes.Add((byte)QoS);
+
+            return bytes.ToArray();
+        }
+    }
+
     public class Subscribe : MqttCommand
     {
-        List<string> _topics = new List<string>();
+        List<Subscription> _topics = new List<Subscription>();
 
-        public Subscribe(string[] topics, MessageId messageId)
+        public Subscribe(Subscription[] subscriptions, MessageId messageId)
             : this(new FixedHeader(CommandMessage.SUBSCRIBE), null)
         {
             this.Header.QualityOfService = QualityOfService.AtLeastOnce;
 
-            if (topics != null)
+            if (subscriptions != null)
             {
-                _topics.AddRange(topics);
+                Subscriptions.AddRange(subscriptions);
             }
 
             MessageId = messageId;
+        }
+
+        public List<Subscription> Subscriptions
+        {
+            get
+            {
+                return _topics;
+            }
         }
 
         protected override byte[] VariableHeader
@@ -37,10 +67,9 @@ namespace MQTT.Commands
             get
             {
                 List<byte> bytes = new List<byte>();
-                foreach (string topic in _topics)
+                foreach (Subscription sub in Subscriptions)
                 {
-                    bytes.AddRange(MQString.ToByteArray(topic));
-                    bytes.Add((byte)QualityOfService.AtLeastOnce);
+                    bytes.AddRange(sub.ToByteArray());
                 }
 
                 return bytes.ToArray();
@@ -60,7 +89,7 @@ namespace MQTT.Commands
 
                         while (stream.Position < stream.Length)
                         {
-                            _topics.Add(MQString.FromStream(stream));
+                            Subscriptions.Add(new Subscription(MQString.FromStream(stream), (QualityOfService)stream.ReadBytesOrFail(1)[0]));
                         }
                     }
                 }
