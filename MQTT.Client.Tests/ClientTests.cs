@@ -28,12 +28,10 @@ namespace MQTT.Client.Tests
         {
             Client c = new Client("clientid");
             Assert.IsFalse(c.IsConnected);
-            c.Connect(new IPEndPoint(IPAddress.Loopback, 1883));
+            c.Connect(new IPEndPoint(IPAddress.Loopback, 1883)).Wait();
             Assert.IsTrue(c.IsConnected);
-
-//            Task<ClientCommand> response = c.WaitFor(CommandMessage.CONNACK, MessageId.Any, TimeSpan.FromSeconds(5));
-//            response.Wait();
-//            Assert.AreEqual(CommandMessage.CONNACK, response.Result.CommandMessage);
+            c.Disconnect(TimeSpan.FromSeconds(1));
+            Assert.IsFalse(c.IsConnected);
         }
     }
 }

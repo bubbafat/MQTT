@@ -57,13 +57,17 @@ namespace MQTT.Client.Tests
 
         private void EnqueueResponse(ClientCommand command)
         {
+            MessageReceivedCallback recv = OnMessageReceived;
+
             switch (command.CommandMessage)
             {
                 case Types.CommandMessage.CONNECT:
-                    _incoming.Enqueue(new ConnAck());
+                    if (recv != null)
+                    {
+                        recv(this, new ClientCommandEventArgs(new ConnAck()));
+                    }
                     break;
                 case Types.CommandMessage.DISCONNECT:
-                case Types.CommandMessage.PUBCOMP:
                     break;
                 default:
                     throw new NotImplementedException();
@@ -74,12 +78,6 @@ namespace MQTT.Client.Tests
         {
             // nothing
         }
-
-        public Task<ClientCommand> WaitForCommand(CommandMessage message, MessageId messageId, TimeSpan timeout)
-        {
-            throw new NotImplementedException();
-        }
-
 
         public event MessageReceivedCallback OnMessageReceived;
     }
