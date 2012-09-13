@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MQTT.Client.Commands;
+using MQTT.Commands;
 
-namespace MQTT.Client
+namespace MQTT.Domain
 {
     public sealed class ClientCommandEventArgs : EventArgs
     {
-        public ClientCommandEventArgs(ClientCommand command)
+        public ClientCommandEventArgs(MqttCommand command)
         {
             Command = command;
         }
 
-        public ClientCommand Command { get; private set; }
+        public MqttCommand Command { get; private set; }
     }
 }

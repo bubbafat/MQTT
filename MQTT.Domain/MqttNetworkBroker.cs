@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net.Sockets;
-using MQTT.Types;
-using System.Threading.Tasks;
-using MQTT.Client.Commands;
-using System.Threading;
 
-namespace MQTT.Client
+using System.Threading.Tasks;
+using System.Threading;
+using MQTT.Commands;
+using MQTT.Types;
+
+namespace MQTT.Domain
 {
     public sealed class MqttNetworkBroker : IMqttBroker
     {
@@ -28,7 +29,7 @@ namespace MQTT.Client
             _socket.Close();
         }
 
-        public System.Threading.Tasks.Task Send(Commands.ClientCommand command)
+        public System.Threading.Tasks.Task Send(MqttCommand command)
         {
             return Task.Factory.StartNew(() =>
                 {
@@ -88,7 +89,7 @@ namespace MQTT.Client
                 MessageReceivedCallback recv = OnMessageReceived;
                 if (recv != null)
                 {
-                    recv(this, new ClientCommandEventArgs(ClientCommand.Create(header, data)));
+                    recv(this, new ClientCommandEventArgs(MqttCommand.Create(header, data)));
                 }
             }
         }

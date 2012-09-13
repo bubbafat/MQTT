@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MQTT.Types;
-using System.IO;
 
-namespace MQTT.Client.Commands
+using System.IO;
+using MQTT.Types;
+
+namespace MQTT.Commands
 {
-    public abstract class ClientCommand
+    public abstract class MqttCommand
     {
-        protected ClientCommand(FixedHeader header)
+        protected MqttCommand(FixedHeader header)
         {
             MessageId = MessageId.Any;
             Header = header;
@@ -83,7 +84,7 @@ namespace MQTT.Client.Commands
             set;
         }
 
-        public static ClientCommand Create(FixedHeader header, byte[] data)
+        public static MqttCommand Create(FixedHeader header, byte[] data)
         {
             switch (header.Message)
             {

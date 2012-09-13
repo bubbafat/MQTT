@@ -3,23 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MQTT.Client.Commands;
+using MQTT.Commands;
 using MQTT.Types;
 
-namespace MQTT.Client
+namespace MQTT.Domain.StateMachines
 {
-    class PublishSendFlow : StateMachine
+    public class PublishSendFlow : StateMachine
     {
         public PublishSendFlow(StateMachineManager manager)
             : base(manager)
         {
         }
 
-        public override Task Start(ClientCommand command, Action<ClientCommand> onSuccess)
+        public override Task Start(MqttCommand command, Action<MqttCommand> onSuccess)
         {
             if (onSuccess == null)
             {
-                onSuccess = (ClientCommand p) => { };
+                onSuccess = (MqttCommand p) => { };
             }
 
             switch (command.Header.QualityOfService)

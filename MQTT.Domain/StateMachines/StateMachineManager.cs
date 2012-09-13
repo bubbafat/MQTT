@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MQTT.Types;
-using MQTT.Client.Commands;
+using MQTT.Commands;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace MQTT.Client
+namespace MQTT.Domain.StateMachines
 {
     public class StateMachineManager
     {
@@ -23,7 +23,7 @@ namespace MQTT.Client
             _broker = broker;
         }
 
-        public void Deliver(ClientCommand command)
+        public void Deliver(MqttCommand command)
         {
             Desire desire;
 
@@ -40,7 +40,7 @@ namespace MQTT.Client
             }
         }
 
-        public Task StartNew(ClientCommand command, Action<ClientCommand> onSuccess)
+        public Task StartNew(MqttCommand command, Action<MqttCommand> onSuccess)
         {
             switch (command.CommandMessage)
             {
@@ -58,22 +58,22 @@ namespace MQTT.Client
             }
         }
 
-        internal Task<ClientCommand> WaitForCommand(CommandMessage message, MessageId messageId, TimeSpan timeout)
+        internal Task<MqttCommand> WaitForCommand(CommandMessage message, MessageId messageId, TimeSpan timeout)
         {
             lock (_desireLock)
             {
-                ClientCommand maybeLoved = _unlovedCommands.Where(c => c.CommandMessage == message && c.MessageId == messageId).FirstOrDefault();
+                MqttCommand maybeLoved = _unlovedCommands.Where(c => c.CommandMessage == message && c.MessageId == messageId).FirstOrDefault();
 
                 if (maybeLoved != null)
                 {
-                    return Task<ClientCommand>.Factory.StartNew(() => maybeLoved);
+                    return Task<MqttCommand>.Factory.StartNew(() => maybeLoved);
                 }
                 else
                 {
-                    ClientCommand result = null;
+                    MqttCommand result = null;
                     ManualResetEvent wait = new ManualResetEvent(false);
 
-                    Desire d = new Desire(message, messageId, (ClientCommand cmd) =>
+                    Desire d = new Desire(message, messageId, (MqttCommand cmd) =>
                     {
                         result = cmd;
                         wait.Set();
@@ -81,7 +81,7 @@ namespace MQTT.Client
 
                     _desireCache.AddAndRemoveDuplicates(d);
 
-                    return Task<ClientCommand>.Factory.StartNew(() =>
+                    return Task<MqttCommand>.Factory.StartNew(() =>
                         {
                             wait.WaitOne(timeout);
                             return result;
@@ -92,10 +92,10 @@ namespace MQTT.Client
 
         readonly object _desireLock = new object();
 
-        List<ClientCommand> _unlovedCommands = new List<ClientCommand>();
+        List<MqttCommand> _unlovedCommands = new List<MqttCommand>();
         DesireCache _desireCache = new DesireCache();
 
-        internal Task Send(ClientCommand message)
+        internal Task Send(MqttCommand message)
         {
             return _broker.Send(message);
         }

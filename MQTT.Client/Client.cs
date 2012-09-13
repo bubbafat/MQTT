@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Net;
 using System.Threading.Tasks;
-using MQTT.Types;
-using MQTT.Client.Commands;
 using System.Timers;
+using MQTT.Domain.StateMachines;
+using MQTT.Domain;
+using MQTT.Commands;
+using MQTT.Types;
 
 namespace MQTT.Client
 {
@@ -36,7 +38,7 @@ namespace MQTT.Client
             _connAcked = false;
             _broker.Connect(endpoint);
 
-            ConnectFlow connect = new ConnectFlow(_manager);
+            ConnectSendFlow connect = new ConnectSendFlow(_manager);
             return connect.Start(new Commands.Connect(_clientId, 300),
                 (startCmd) =>
                 {
@@ -51,7 +53,7 @@ namespace MQTT.Client
             _broker.Disconnect();
         }
 
-        public Task Publish(string topic, string message, QualityOfService qos, Action<ClientCommand> completed)
+        public Task Publish(string topic, string message, QualityOfService qos, Action<MqttCommand> completed)
         {
             Publish pub = new Commands.Publish(topic, message);
             pub.Header.QualityOfService = qos;
@@ -87,7 +89,7 @@ namespace MQTT.Client
 
         void _broker_OnMessageReceived(object sender, ClientCommandEventArgs e)
         {
-            ClientCommand command = e.Command;
+            MqttCommand command = e.Command;
 
             System.Diagnostics.Debug.WriteLine("RECV: {0} ({1})", command.CommandMessage, command.MessageId);
 
@@ -111,7 +113,7 @@ namespace MQTT.Client
                     // ignore (we sent it) - eventually track
                     break;
                 default:
-                    _manager.StartNew(command, (ClientCommand cmd) =>
+                    _manager.StartNew(command, (MqttCommand cmd) =>
                         {
                             notify(cmd);
                         });
@@ -119,7 +121,7 @@ namespace MQTT.Client
             }
         }
 
-        private void notify(ClientCommand command)
+        private void notify(MqttCommand command)
         {
             UnsolicitedMessageCallback callback = OnUnsolicitedMessage;
             if (callback != null)

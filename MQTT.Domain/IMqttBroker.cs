@@ -1,14 +1,12 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MQTT.Client.Commands;
 using System.Threading.Tasks;
 using System.Net;
-using MQTT.Types;
+using MQTT.Commands;
 
-namespace MQTT.Client
+namespace MQTT.Domain
 {
     public delegate void MessageReceivedCallback(object sender, ClientCommandEventArgs e);
 
@@ -17,7 +15,7 @@ namespace MQTT.Client
         void Connect(IPEndPoint endpoint);
         void Disconnect();
 
-        Task Send(ClientCommand command);
+        Task Send(MqttCommand command);
 
         event MessageReceivedCallback OnMessageReceived;
 

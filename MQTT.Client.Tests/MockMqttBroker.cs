@@ -2,18 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MQTT.Client.Commands;
+using MQTT.Commands;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Threading;
 using MQTT.Types;
+using MQTT.Domain;
 
 namespace MQTT.Client.Tests
 {
     class MockMqttBroker : IMqttBroker
     {
         bool _connected = false;
-        ConcurrentQueue<ClientCommand> _incoming = new ConcurrentQueue<ClientCommand>();
+        ConcurrentQueue<MqttCommand> _incoming = new ConcurrentQueue<MqttCommand>();
 
         public void Connect(System.Net.IPEndPoint endpoint)
         {
@@ -25,7 +26,7 @@ namespace MQTT.Client.Tests
             _connected = false;
         }
 
-        public Task Send(ClientCommand command)
+        public Task Send(MqttCommand command)
         {
             return Task.Factory.StartNew(() =>
                 {
@@ -33,13 +34,13 @@ namespace MQTT.Client.Tests
                 });
         }
 
-        public Task<ClientCommand> ReceiveUnsolicited()
+        public Task<MqttCommand> ReceiveUnsolicited()
         {
-            return Task<ClientCommand>.Factory.StartNew(() =>
+            return Task<MqttCommand>.Factory.StartNew(() =>
                 {
                     while(true)
                     {
-                        ClientCommand cmd;
+                        MqttCommand cmd;
                         if (_incoming.TryDequeue(out cmd))
                         {
                             return cmd;
@@ -55,7 +56,7 @@ namespace MQTT.Client.Tests
             get { return _connected; }
         }
 
-        private void EnqueueResponse(ClientCommand command)
+        private void EnqueueResponse(MqttCommand command)
         {
             MessageReceivedCallback recv = OnMessageReceived;
 

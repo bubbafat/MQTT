@@ -2,25 +2,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MQTT.Client.Commands;
+using MQTT.Commands;
 using MQTT.Types;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace MQTT.Client
+namespace MQTT.Domain.StateMachines
 {
-    public class ConnectFlow : StateMachine
+    public class ConnectSendFlow : StateMachine
     {
-        public ConnectFlow(StateMachineManager manager)
+        public ConnectSendFlow(StateMachineManager manager)
             : base(manager)
         {
         }
 
-        public override Task Start(ClientCommand command, Action<ClientCommand> onSuccess)
+        public override Task Start(MqttCommand command, Action<MqttCommand> onSuccess)
         {
             if (onSuccess == null)
             {
-                onSuccess = (ClientCommand c) => { };
+                onSuccess = (MqttCommand c) => { };
             }
 
             return Send(command)

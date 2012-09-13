@@ -5,9 +5,9 @@ using System.Text;
 using MQTT.Types;
 using System.IO;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
-    public class Publish : ClientCommand
+    public class Publish : MqttCommand
     {
         public Publish(string topic, string message)
             : this(new FixedHeader(CommandMessage.PUBLISH), null)

@@ -5,9 +5,9 @@ using System.Text;
 using MQTT.Types;
 using System.IO;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
-    public class Subscribe : ClientCommand
+    public class Subscribe : MqttCommand
     {
         List<string> _topics = new List<string>();
 

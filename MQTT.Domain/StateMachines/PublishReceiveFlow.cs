@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MQTT.Client.Commands;
+using MQTT.Commands;
 using System.Threading.Tasks;
 using MQTT.Types;
 
-namespace MQTT.Client
+namespace MQTT.Domain.StateMachines
 {
     public class PublishReceiveFlow : StateMachine
     {
@@ -15,11 +15,11 @@ namespace MQTT.Client
         {
         }
 
-        public override Task Start(ClientCommand msg, Action<ClientCommand> release)
+        public override Task Start(MqttCommand msg, Action<MqttCommand> release)
         {
             if (release == null)
             {
-                release = (ClientCommand p) => { };
+                release = (MqttCommand p) => { };
             }
 
             switch (msg.Header.QualityOfService)

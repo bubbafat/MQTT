@@ -74,7 +74,5 @@ namespace MQTT.Types
 
             return bytes;
         }
-
-
     }
 }

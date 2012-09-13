@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net;
-using MQTT.Client.Commands;
 using System.Threading.Tasks;
 using MQTT.Types;
-using MQTT.Client;
 using System.Threading;
+using MQTT.Domain;
+using MQTT.Commands;
+using MQTT.Client;
 
 namespace MQTT.ConsoleApp
 {
@@ -52,7 +53,7 @@ namespace MQTT.ConsoleApp
 
         private static void ThreadAction()
         {
-            using (MQTT.Client.Client c = new Client.Client("mosquito/bubbafat"))
+            using (MQTT.Client.Client c = new MQTT.Client.Client("mosquito/bubbafat"))
             {
                 c.OnUnsolicitedMessage += new UnsolicitedMessageCallback(c_OnUnsolicitedMessage);
 
@@ -72,7 +73,7 @@ namespace MQTT.ConsoleApp
 
         static void c_OnUnsolicitedMessage(object sender, ClientCommandEventArgs e)
         {
-            ClientCommand command = e.Command;
+            MqttCommand command = e.Command;
 
             Publish p = command as Publish;
             if (p != null)

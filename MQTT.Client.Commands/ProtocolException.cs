@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using MQTT.Types;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
     [Serializable]
     public class ProtocolException : Exception

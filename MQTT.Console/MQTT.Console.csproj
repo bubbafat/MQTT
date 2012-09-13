@@ -56,6 +56,10 @@
       <Project>{A371D7F6-3E70-4F59-84C1-DA0DEE1DF2EB}</Project>
       <Name>MQTT.Client</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MQTT.Domain\MQTT.Domain.csproj">
+      <Project>{B4B1A948-5CAF-4D58-B655-C023D5D59ABF}</Project>
+      <Name>MQTT.Domain</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MQTT.Types\MQTT.Types.csproj">
       <Project>{D7E0B27D-DD60-4C87-B30D-B1AA5CBB6501}</Project>
       <Name>MQTT.Types</Name>

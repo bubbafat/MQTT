@@ -5,9 +5,9 @@ using System.Text;
 using MQTT.Types;
 using System.IO;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
-    public class UnSubAck : ClientCommand
+    public class UnSubAck : MqttCommand
     {
         public UnSubAck(ushort messageId)
             : base(new FixedHeader(CommandMessage.UNSUBACK))

@@ -5,9 +5,9 @@ using System.Text;
 using MQTT.Types;
 using System.IO;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
-    public class SubAck : ClientCommand
+    public class SubAck : MqttCommand
     {
         List<QualityOfService> _grants;
 

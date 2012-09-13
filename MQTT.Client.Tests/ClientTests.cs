@@ -5,8 +5,9 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MQTT.Types;
 using System.Net;
-using MQTT.Client.Commands;
+using MQTT.Commands;
 using System.Threading.Tasks;
+using MQTT.Domain;
 
 namespace MQTT.Client.Tests
 {

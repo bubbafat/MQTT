@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MQTT.Types;
+using MQTT.Commands;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
-    public class ConnAck : ClientCommand
+    public class ConnAck : MqttCommand
     {
         byte[] _variableHeader = new byte[2];
 

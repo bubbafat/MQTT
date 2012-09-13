@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using MQTT.Types;
 using System.IO;
+using MQTT.Commands;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
-    public class PubAck : ClientCommand
+    public class PubAck : MqttCommand
     {
         public PubAck(MessageId messageId)
             : base(new FixedHeader(CommandMessage.PUBACK))

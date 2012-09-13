@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MQTT.Types;
-using MQTT.Client.Commands;
+using MQTT.Commands;
 
-namespace MQTT.Client
+namespace MQTT.Domain
 {
     internal class DesireCache
     {
@@ -53,7 +53,7 @@ namespace MQTT.Client
 
     internal class Desire
     {
-        public Desire(CommandMessage msg, MessageId id, Action<ClientCommand> fulfilled)
+        public Desire(CommandMessage msg, MessageId id, Action<MqttCommand> fulfilled)
         {
             if (fulfilled == null)
             {
@@ -67,9 +67,9 @@ namespace MQTT.Client
 
         public CommandMessage Message { get; private set; }
         public MessageId MessageId { get; private set; }
-        private readonly Action<ClientCommand> _fulfilled;
+        private readonly Action<MqttCommand> _fulfilled;
 
-        public void Fulfilled(ClientCommand command)
+        public void Fulfilled(MqttCommand command)
         {
             _fulfilled(command);
         }

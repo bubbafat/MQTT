@@ -5,9 +5,9 @@ using System.Text;
 using MQTT.Types;
 using System.IO;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
-    public class PubRel : ClientCommand
+    public class PubRel : MqttCommand
     {
         public PubRel(MessageId messageId)
             : base(new FixedHeader(CommandMessage.PUBREL))

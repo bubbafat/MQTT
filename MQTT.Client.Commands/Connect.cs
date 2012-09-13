@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using MQTT.Types;
 using System.IO;
+using MQTT.Commands;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
-    public class Connect : ClientCommand
+    public class Connect : MqttCommand
     {
         public Connect(string clientId, ushort keepAlive)
             : this(new FixedHeader(CommandMessage.CONNECT), null)

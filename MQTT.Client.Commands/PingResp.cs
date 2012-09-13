@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MQTT.Types;
+using MQTT.Commands;
 
-namespace MQTT.Client.Commands
+namespace MQTT.Commands
 {
-    public class PingResp : ClientCommand
+    public class PingResp : MqttCommand
     {
         public PingResp()
             : this(new FixedHeader(CommandMessage.PINGRESP))

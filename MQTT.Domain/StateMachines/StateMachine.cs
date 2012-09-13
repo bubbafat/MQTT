@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MQTT.Client.Commands;
+using MQTT.Commands;
 using MQTT.Types;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace MQTT.Client
+namespace MQTT.Domain.StateMachines
 {
     public abstract class StateMachine
     {
@@ -23,14 +23,14 @@ namespace MQTT.Client
             _manager = manager;
         }
 
-        public abstract Task Start(ClientCommand command, Action<ClientCommand> onSuccess);
+        public abstract Task Start(MqttCommand command, Action<MqttCommand> onSuccess);
 
-        protected Task<ClientCommand> WaitFor(CommandMessage message, MessageId messageId, TimeSpan timeout)
+        protected Task<MqttCommand> WaitFor(CommandMessage message, MessageId messageId, TimeSpan timeout)
         {
             return _manager.WaitForCommand(message, messageId, timeout);
         }
 
-        protected Task Send(ClientCommand message)
+        protected Task Send(MqttCommand message)
         {
             return _manager.Send(message);
         }
