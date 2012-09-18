@@ -28,6 +28,29 @@ namespace MQTT.Domain
             _socket.Close();
         }
 
+        public Socket Socket
+        {
+            get
+            {
+                return _socket;
+            }
+        }
+
+        public MqttCommand ReadCommand()
+        {
+            FixedHeader header;
+            byte[] data = null;
+
+            header = FixedHeader.FromSocket(_socket);
+
+            if (header.RemainingLength > 0)
+            {
+                data = _socket.ReadBytes(header.RemainingLength);
+            }
+
+            return MqttCommand.Create(header, data);
+        }
+
         public System.Threading.Tasks.Task Send(MqttCommand command)
         {
             return Task.Factory.StartNew(() =>
@@ -91,22 +114,11 @@ namespace MQTT.Domain
         {
             while (true)
             {
-                FixedHeader header;
-                byte[] data = null;
-
-                lock (_socketReadLock)
-                {
-                    header = FixedHeader.FromSocket(_socket);
-
-                    if (header.RemainingLength > 0)
-                    {
-                        data = _socket.ReadBytes(header.RemainingLength);
-                    }
-                }
+                MqttCommand command = ReadCommand();
 
                 if (recv != null)
                 {
-                    recv(MqttCommand.Create(header, data));
+                    recv(command);
                 }
             }
         }

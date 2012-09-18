@@ -27,7 +27,7 @@ namespace MQTT.Domain.StateMachines
                 case QualityOfService.AtMostOnce:
                     return Send(command)
                         .ContinueWith((task) =>
-                            Task.Factory.StartNew(() => onSuccess(command)),
+                            onSuccess(command),
                             TaskContinuationOptions.OnlyOnRanToCompletion);
                 case QualityOfService.AtLeastOnce:
                     return Send(command)
@@ -35,7 +35,7 @@ namespace MQTT.Domain.StateMachines
                             WaitFor(CommandMessage.PUBACK, command.MessageId, TimeSpan.FromSeconds(60)),
                             TaskContinuationOptions.OnlyOnRanToCompletion)
                         .ContinueWith((task) =>
-                            Task.Factory.StartNew(() => onSuccess(command)),
+                            onSuccess(command),
                             TaskContinuationOptions.OnlyOnRanToCompletion);
                 case QualityOfService.ExactlyOnce:
                     return Send(command)
@@ -49,7 +49,7 @@ namespace MQTT.Domain.StateMachines
                             WaitFor(CommandMessage.PUBCOMP, command.MessageId, TimeSpan.FromSeconds(60)),
                             TaskContinuationOptions.OnlyOnRanToCompletion)
                         .ContinueWith((task) =>
-                            Task.Factory.StartNew(() => onSuccess(command)),
+                            onSuccess(command),
                             TaskContinuationOptions.OnlyOnRanToCompletion);
                 default:
                     throw new InvalidOperationException("Unknown QoS");

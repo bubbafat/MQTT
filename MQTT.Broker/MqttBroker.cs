@@ -15,7 +15,9 @@ namespace MQTT.Broker
 {
     public sealed class MqttBroker : IDisposable
     {
-        Socket _listenSocket;
+        ConnectionManager _connections = new ConnectionManager();
+        CommandDrain _drain = new CommandDrain();
+
         Thread _listenThread;
 
         public MqttBroker()
@@ -24,9 +26,8 @@ namespace MQTT.Broker
 
         public void Listen(IPEndPoint endpoint)
         {
-            _listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            _listenSocket.Bind(endpoint);
-            _listenSocket.Listen(1024);
+            _connections.Start();
+            _drain.Start();
 
             _listenThread = new Thread(ListenLoop);
             _listenThread.Start();            
@@ -38,21 +39,33 @@ namespace MQTT.Broker
             {
                 _listenThread.Abort();
             }
+
+            _connections.Stop();
+            _drain.Stop();
+        }
+
+        public int ConnectionCount
+        {
+            get
+            {
+                return _connections.ConnectionCount;
+            }
         }
 
         private void ListenLoop()
         {
             while (true)
             {
-                Socket connection = _listenSocket.Accept();
-                if (connection.Connected)
+                IList<ActiveConnection> ready = _connections.Select();
+                if (ready.Count > 0)
                 {
-                    NetworkInterface net = new NetworkInterface(connection);
-                    _activeConnections.Add(new ActiveConnection(net));
+                    IncomingDataQueue.Enqueue(ready);
+                }
+                else
+                {
+                    Thread.Sleep(100);
                 }
             }
         }
-
-        List<ActiveConnection> _activeConnections = new List<ActiveConnection>();
     }
 }

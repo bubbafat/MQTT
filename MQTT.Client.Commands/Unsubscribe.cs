@@ -20,6 +20,15 @@ namespace MQTT.Commands
             }
         }
 
+        public List<string> Topics
+        {
+            get
+            {
+                return _topics;
+            }
+        }
+
+
         protected override byte[] Payload
         {
             get
