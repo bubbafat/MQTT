@@ -6,7 +6,7 @@ using StructureMap;
 
 namespace MQTT.Types
 {
-    public static class Factory
+    public static class OldFactory
     {
         public static T GetInstance<T>()
         {

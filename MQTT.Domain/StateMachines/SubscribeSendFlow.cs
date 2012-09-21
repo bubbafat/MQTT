@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MQTT.Commands;
-using System.Threading.Tasks;
 using MQTT.Types;
+using System.Threading.Tasks;
 
 namespace MQTT.Domain.StateMachines
 {
-    public class PublishReceiveFlow : StateMachine
+    public class SubscribeSendFlow : StateMachine
     {
-        public PublishReceiveFlow(StateMachineManager manager)
+        public SubscribeSendFlow(StateMachineManager manager)
             : base(manager)
         {
         }
@@ -25,26 +25,21 @@ namespace MQTT.Domain.StateMachines
             switch (msg.Header.QualityOfService)
             {
                 case QualityOfService.AtMostOnce:
-                    return Task.Factory.StartNew(() => release(msg));
+                    return Task.Factory.StartNew(() => { throw new ProtocolException(msg.CommandMessage); });
                 case QualityOfService.AtLeastOnce:
-                    return Send(new PubAck(msg.MessageId))
-                         .ContinueWith((task) =>
+                    return Send(msg)
+                        .ContinueWith((task) =>
+                            WaitFor(CommandMessage.SUBACK, msg.MessageId, TimeSpan.FromSeconds(30)))
+                        .ContinueWith((task) =>
                             release(msg),
                             TaskContinuationOptions.OnlyOnRanToCompletion);
                 case QualityOfService.ExactlyOnce:
-                    return Send(new PubRec(msg.MessageId))
-                        .ContinueWith((task) =>
-                            WaitFor(CommandMessage.PUBREL, msg.MessageId, TimeSpan.FromSeconds(60)),
-                            TaskContinuationOptions.OnlyOnRanToCompletion)
-                        .ContinueWith((task) =>
-                            Send(new PubComp(msg.MessageId)),
-                            TaskContinuationOptions.OnlyOnRanToCompletion)
-                        .ContinueWith((task) =>
-                            release(msg),
-                            TaskContinuationOptions.OnlyOnRanToCompletion);
+                    return Task.Factory.StartNew(() => { throw new ProtocolException(msg.CommandMessage); });
                 default:
                     throw new InvalidOperationException("Unknown QoS");
             }
         }
+
+
     }
 }

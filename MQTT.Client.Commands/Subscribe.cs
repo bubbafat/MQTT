@@ -27,6 +27,12 @@ namespace MQTT.Commands
 
             return bytes.ToArray();
         }
+
+        public bool IncludesPath(string topic)
+        {
+            // TODO actually care
+            return true;
+        }
     }
 
     public class Subscribe : MqttCommand

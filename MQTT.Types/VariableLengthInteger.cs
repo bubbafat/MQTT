@@ -56,5 +56,23 @@ namespace MQTT.Types
 
             return result;
         }
+
+        internal static int FromStream(Stream stream)
+        {
+            int result = 0;
+            int multiplier = 1;
+            int digit = 0;
+            int bytesRead = 0;
+
+            do
+            {
+                digit = stream.ReadBytesOrFailAsync(1).Await<byte[]>().Result[0];
+                result += (digit & 127) * multiplier;
+                multiplier *= 128;
+                bytesRead++;
+            } while ((digit & 128) != 0 && (bytesRead < 4));
+
+            return result;
+        }
     }
 }

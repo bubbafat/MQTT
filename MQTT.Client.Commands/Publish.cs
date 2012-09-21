@@ -9,7 +9,7 @@ namespace MQTT.Commands
 {
     public class Publish : MqttCommand
     {
-        public Publish(string topic, string message)
+        public Publish(string topic, byte[] message)
             : this(new FixedHeader(CommandMessage.PUBLISH), null)
         {
             if (string.IsNullOrEmpty(topic))
@@ -19,14 +19,20 @@ namespace MQTT.Commands
 
             Topic = topic;
 
-            if (!string.IsNullOrEmpty(message))
+            if (message != null)
             {
-                Message = MQString.ToByteArray(message);
+                Message = new byte[message.Length];
+                message.CopyTo(Message, 0);
             }
             else
             {
                 Message = new byte[0];
             }
+        }
+
+        public Publish(string topic, string message)
+            : this(topic, MQString.ToByteArray(message))
+        {
         }
 
         protected override byte[] VariableHeader

@@ -55,6 +55,7 @@
     <Compile Include="StateMachines\PublishSendFlow.cs" />
     <Compile Include="StateMachines\StateMachine.cs" />
     <Compile Include="StateMachines\SubscribeFlow.cs" />
+    <Compile Include="StateMachines\SubscribeSendFlow.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MQTT.Client.Commands\MQTT.Client.Commands.csproj">

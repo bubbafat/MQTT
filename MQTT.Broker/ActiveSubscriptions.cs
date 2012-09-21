@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MQTT.Domain;
 
 namespace MQTT.Broker
 {
@@ -16,24 +17,57 @@ namespace MQTT.Broker
             }
         }
 
-        internal static void Add(ActiveConnection activeConnection, List<Commands.Subscription> list)
+        internal void Add(string clientId, List<Commands.Subscription> list)
         {
-            throw new NotImplementedException();
+            foreach(Commands.Subscription sub in list)
+            {
+                _activeSubscriptions.Add(new ActiveSubscription(clientId, sub));
+            }
         }
 
-        internal static void Publish(string ClientId, string p, byte[] p_2)
+        internal IList<string> Publish(string clientId, string topic, byte[] message)
         {
-            throw new NotImplementedException();
+            HashSet<string> deliveryClients = new HashSet<string>();
+
+            foreach (ActiveSubscription sub in _activeSubscriptions.Where(s => s.ClientId != clientId))
+            {
+                if (!deliveryClients.Contains(sub.ClientId))
+                {
+                    if (sub.Subscription.IncludesPath(topic))
+                    {
+                        deliveryClients.Add(sub.ClientId);
+                    }
+                }
+            }
+
+            return deliveryClients.ToList();
         }
 
-        internal static void Remove(ActiveConnection activeConnection, List<string> list)
+        internal void Remove(string clientId, List<string> list)
         {
-            throw new NotImplementedException();
+            foreach (string topic in list)
+            {
+                _activeSubscriptions.RemoveAll(sub => sub.ClientId == clientId && sub.Subscription.Topic == topic);
+            }
         }
 
-        internal static void Remove(ActiveConnection activeConnection)
+        internal void Remove(string clientId)
         {
-            throw new NotImplementedException();
+            _activeSubscriptions.RemoveAll(sub => sub.ClientId == clientId);
+        }
+
+        List<ActiveSubscription> _activeSubscriptions = new List<ActiveSubscription>();
+
+        class ActiveSubscription
+        {
+            public ActiveSubscription(string clientId, Commands.Subscription subscription)
+            {
+                ClientId = clientId;
+                Subscription = subscription;
+            }
+
+            public string ClientId { get; private set; }
+            public Commands.Subscription Subscription { get; private set; }
         }
     }
 }

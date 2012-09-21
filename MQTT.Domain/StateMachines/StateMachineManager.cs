@@ -11,12 +11,12 @@ namespace MQTT.Domain.StateMachines
 {
     public class StateMachineManager
     {
-        readonly Dictionary<CommandMessage, Dictionary<QualityOfService, Type>> _flowTable 
-            = new Dictionary<CommandMessage,Dictionary<QualityOfService,Type>>();
-
-        readonly object _flowLock = new object();
-
         INetworkInterface _broker;
+
+        readonly object _desireLock = new object();
+
+        List<MqttCommand> _unlovedCommands = new List<MqttCommand>();
+        DesireCache _desireCache = new DesireCache();
 
         public StateMachineManager(INetworkInterface broker)
         {
@@ -25,10 +25,10 @@ namespace MQTT.Domain.StateMachines
 
         public void Deliver(MqttCommand command)
         {
-            Desire desire;
-
             lock (_desireLock)
             {
+                Desire desire;
+                
                 if (_desireCache.TryGetAndRemove(command.CommandMessage, command.MessageId, out desire))
                 {
                     desire.Fulfilled(command);
@@ -75,7 +75,7 @@ namespace MQTT.Domain.StateMachines
         {
             lock (_desireLock)
             {
-                MqttCommand maybeLoved = _unlovedCommands.Where(c => c.CommandMessage == message && c.MessageId == messageId).FirstOrDefault();
+                MqttCommand maybeLoved = _unlovedCommands.Where(c => c.MessageId == messageId && c.CommandMessage == message).FirstOrDefault();
 
                 if (maybeLoved != null)
                 {
@@ -102,11 +102,6 @@ namespace MQTT.Domain.StateMachines
                 }
             }
         }
-
-        readonly object _desireLock = new object();
-
-        List<MqttCommand> _unlovedCommands = new List<MqttCommand>();
-        DesireCache _desireCache = new DesireCache();
 
         internal Task Send(MqttCommand message)
         {

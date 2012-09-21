@@ -10,62 +10,27 @@ using System.Net;
 using MQTT.Commands;
 using System.Net.Sockets;
 using System.Threading;
+using MQTT.Broker.Network;
 
 namespace MQTT.Broker
 {
     public sealed class MqttBroker : IDisposable
     {
-        ConnectionManager _connections = new ConnectionManager();
-        CommandDrain _drain = new CommandDrain();
+        IConnectionManager _manager;
 
-        Thread _listenThread;
-
-        public MqttBroker()
+        public MqttBroker(IConnectionManager connectionManager)
         {
+            _manager = connectionManager;
         }
 
         public void Listen(IPEndPoint endpoint)
         {
-            _connections.Start();
-            _drain.Start();
-
-            _listenThread = new Thread(ListenLoop);
-            _listenThread.Start();            
+            _manager.Start();
         }
 
         public void Dispose()
         {
-            if (_listenThread != null)
-            {
-                _listenThread.Abort();
-            }
-
-            _connections.Stop();
-            _drain.Stop();
-        }
-
-        public int ConnectionCount
-        {
-            get
-            {
-                return _connections.ConnectionCount;
-            }
-        }
-
-        private void ListenLoop()
-        {
-            while (true)
-            {
-                IList<ActiveConnection> ready = _connections.Select();
-                if (ready.Count > 0)
-                {
-                    IncomingDataQueue.Enqueue(ready);
-                }
-                else
-                {
-                    Thread.Sleep(100);
-                }
-            }
+            _manager.Dispose();
         }
     }
 }

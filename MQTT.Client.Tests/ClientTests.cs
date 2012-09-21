@@ -17,7 +17,7 @@ namespace MQTT.Client.Tests
         [TestInitialize]
         public void Initialize()
         {
-            Factory.Initialize(
+            OldFactory.Initialize(
                 new Dictionary<Type, Type>
                 {
                     { typeof(IMqttBroker), typeof(MockMqttBroker) },

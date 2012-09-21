@@ -9,39 +9,31 @@ namespace MQTT.Domain
 {
     internal class DesireCache
     {
-        readonly object _lock = new object();
-
         Dictionary<int, Desire> _desires = new Dictionary<int, Desire>();
 
         internal void AddAndRemoveDuplicates(Desire d)
         {
-            lock (_lock)
+            int key = GetKeyFrom(d.Message, d.MessageId);
+            if (_desires.ContainsKey(key))
             {
-                int key = GetKeyFrom(d.Message, d.MessageId);
-                if (_desires.ContainsKey(key))
-                {
-                    _desires.Remove(key);
-                }
-
-                _desires.Add(key, d);
+                _desires.Remove(key);
             }
+
+            _desires.Add(key, d);
         }
 
         internal bool TryGetAndRemove(Types.CommandMessage commandMessage, Types.MessageId messageId, out Desire desire)
         {
-            lock (_lock)
+            int key = GetKeyFrom(commandMessage, messageId);
+            if (_desires.TryGetValue(key, out desire))
             {
-                int key = GetKeyFrom(commandMessage, messageId);
-                if (_desires.TryGetValue(key, out desire))
-                {
-                    _desires.Remove(key);
-                    return true;
-                }
-                else
-                {
-                    desire = null;
-                    return false;
-                }
+                _desires.Remove(key);
+                return true;
+            }
+            else
+            {
+                desire = null;
+                return false;
             }
         }
 

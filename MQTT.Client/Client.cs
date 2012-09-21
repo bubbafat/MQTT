@@ -27,7 +27,7 @@ namespace MQTT.Client
 
         public Client(string clientId)
         {
-            _broker = Factory.GetInstance<IMqttBroker>();
+            _broker = OldFactory.GetInstance<IMqttBroker>();
             _broker.OnMessageReceived += new MessageReceivedCallback(_broker_OnMessageReceived);
             _manager = new StateMachineManager(_broker);
             _clientId = clientId;
@@ -66,10 +66,11 @@ namespace MQTT.Client
             return publish.Start(pub, completed);
         }
 
-        public Task Subscribe(Subscription[] subs)
+        public Task Subscribe(Subscription[] subs, Action<MqttCommand> completed)
         {
             Subscribe s = new Commands.Subscribe(subs, _idSeq.Next());
-            return _broker.Send(s);
+            SubscribeSendFlow flow = new SubscribeSendFlow(_manager);
+            return flow.Start(s, completed);
         }
 
         public Task Unsubscribe(string[] topics)

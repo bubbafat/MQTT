@@ -12,22 +12,19 @@ namespace mqtt_broker
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main(string[] args)        
         {
-            Factory.Initialize(
-                new Dictionary<Type, Type>
-                {
-                    { typeof(IMqttBroker), typeof(MqttNetworkBroker) },
-                });
-
-            using (MqttBroker broker = new MqttBroker())
+            using (MqttBroker broker = Factory.Get<MqttBroker>())
             {
                 IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, 1883);
                 broker.Listen(endpoint);
 
+                Console.Write("Listening");
+
                 while (true)
                 {
-                    Thread.Sleep(1000);
+                    Console.Write(".");
+                    Thread.Sleep(10000);
                 }
             }
         }

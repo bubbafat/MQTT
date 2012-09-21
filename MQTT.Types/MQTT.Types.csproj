@@ -53,6 +53,7 @@
     <Compile Include="QualityOfService.cs" />
     <Compile Include="SocketExtensions.cs" />
     <Compile Include="StreamExtensions.cs" />
+    <Compile Include="TaskExtensions.cs" />
     <Compile Include="VariableLengthInteger.cs" />
   </ItemGroup>
   <ItemGroup>

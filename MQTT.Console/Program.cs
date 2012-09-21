@@ -19,16 +19,18 @@ namespace MQTT.ConsoleApp
 
         static void Main(string[] args)
         {
-            Factory.Initialize(
+            OldFactory.Initialize(
                 new Dictionary<Type, Type>
                 {
                     { typeof(IMqttBroker), typeof(MqttNetworkBroker) },
                 });
 
-            Thread listener = new Thread(() =>
-                {
-                    ThreadAction();
-                });
+            Thread[] listeners = new Thread[2];
+
+            for (int i = 0; i < listeners.Length; i++)
+            {
+                listeners[i] = new Thread(ThreadAction);
+            }
 
             Thread writer = new Thread(() =>
                 {
@@ -38,13 +40,22 @@ namespace MQTT.ConsoleApp
             Console.WriteLine("STARTING...");
 
             writer.Start();
-            listener.Start();
+
+            for (int i = 0; i < listeners.Length; i++)
+            {
+                listeners[i].Start(i);
+            }
 
             writer.Join();
-            listener.Join();
+            for (int i = 0; i < listeners.Length; i++)
+            {
+                listeners[i].Join();
+            }
 
             Console.WriteLine("DONE");
         }
+
+        static ManualResetEvent waitForSubscribed = new ManualResetEvent(false);
 
         private static void WriterAction()
         {
@@ -55,37 +66,55 @@ namespace MQTT.ConsoleApp
                 IPAddress address = Dns.GetHostAddresses(server).Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).First();
                 IPEndPoint test = new IPEndPoint(address, port);
 
+                Console.WriteLine("WRITER connecting...");
                 DemandWorked(c.Connect(test));
+                Console.WriteLine("WRITER connected...");
 
+                Console.WriteLine("Waiting for subscribe to finish...");
+                waitForSubscribed.WaitOne();
+                Console.WriteLine("Subscribe is ready!");
+
+                int count = 0;
                 while (true)
                 {
-                    Thread.Sleep(5000);
-                    c.Publish("root", "This is the message!", QualityOfService.AtMostOnce, null);
+                    count++;
+                    Console.WriteLine("WRITER writing...");
+                    c.Publish("root", string.Format("This is message {0}!", count), QualityOfService.ExactlyOnce, null).Wait();
+                    Console.WriteLine("WRITER wrote...");
                 }
 
                 c.Disconnect(TimeSpan.FromSeconds(5));
             }
         }
 
-        private static void ThreadAction()
+        private static void ThreadAction(object name)
         {
-            using (MQTT.Client.Client c = new MQTT.Client.Client("listener"))
+            string lname = string.Format("listener {0}", name.ToString());
+
+            using (MQTT.Client.Client c = new MQTT.Client.Client(lname))
             {
                 c.OnUnsolicitedMessage += new UnsolicitedMessageCallback(c_OnUnsolicitedMessage);
 
                 IPAddress address = Dns.GetHostAddresses(server).Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).First();
                 IPEndPoint test = new IPEndPoint(address, port);
 
+                Console.WriteLine("{0} connecting...", lname);
                 DemandWorked(c.Connect(test));
+                Console.WriteLine("{0} connected...", lname);
+
+                Console.WriteLine("{0} subscribing...", lname);
                 DemandWorked(c.Subscribe(
                     new Subscription[] 
                     {
                         new Subscription("#", QualityOfService.ExactlyOnce), 
-                    }));
+                    }, null));
+                Console.WriteLine("{0} subscribed...", lname);
+
+                waitForSubscribed.Set();
 
                 while (true)
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(100);
                 }
 
                 c.Disconnect(TimeSpan.FromSeconds(5));
