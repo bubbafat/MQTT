@@ -24,8 +24,8 @@ namespace MQTT.Domain.StateMachines
 
             return Send(new ConnAck())
                 .ContinueWith((task) =>
-                    Task.Factory.StartNew(() => onSuccess(command)),
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                    onSuccess(command),
+                    TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
         }    
     }
 }

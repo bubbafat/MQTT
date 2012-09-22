@@ -13,14 +13,18 @@ namespace MQTT.Domain
 {
     public sealed class MqttNetworkBroker : IMqttBroker
     {
-        NetworkInterface _network;
+        INetworkInterface _network;
+
+        public MqttNetworkBroker(INetworkInterface network)
+        {
+            _network = network;
+        }
 
         public void Connect(System.Net.IPEndPoint endpoint)
         {
-            Socket socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            socket.Connect(endpoint);
-            _network = new NetworkInterface(socket);
-            _network.Start((MqttCommand cmd) =>
+            TcpClient client = new TcpClient();
+            client.Connect(endpoint);
+            _network.Start(client, (MqttCommand cmd) =>
                 {
                     MessageReceivedCallback recv = OnMessageReceived;
                     if (recv != null)
@@ -35,7 +39,7 @@ namespace MQTT.Domain
             _network.Disconnect();
         }
 
-        public System.Threading.Tasks.Task Send(MqttCommand command)
+        public Task Send(MqttCommand command)
         {
             return _network.Send(command);
         }
@@ -53,6 +57,11 @@ namespace MQTT.Domain
         public void Dispose()
         {
             using (_network) { }
+        }
+
+        public void Start(TcpClient client, Action<MqttCommand> onIncomingMessage)
+        {
+            _network.Start(client, onIncomingMessage);
         }
     }
 

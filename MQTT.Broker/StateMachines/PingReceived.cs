@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using MQTT.Commands;
 using MQTT.Broker.Network;
+using System.Threading.Tasks;
 
 namespace MQTT.Broker.StateMachines
 {
@@ -20,7 +21,8 @@ namespace MQTT.Broker.StateMachines
 
         public override void Start()
         {
-            throw new NotImplementedException();
+            _connection.Send(new PingResp());
+            _connection.Complete(_command);
         }
     }
 }

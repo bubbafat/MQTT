@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using MQTT.Types;
+using MQTT.Domain;
 
 namespace MQTT.Broker.Network
 {
@@ -63,12 +64,12 @@ namespace MQTT.Broker.Network
                 Task stop = Task.Factory.StartNew(() =>
                 {
                     stopThread.WaitOne();
-                });
+                }, TaskCreationOptions.LongRunning);
 
                 Task added = Task.Factory.StartNew(() =>
                 {
                     _itemAdded.WaitOne();
-                });
+                }, TaskCreationOptions.LongRunning);
 
                 List<Task> toListen = new List<Task>();
                 toListen.Add(stop);
@@ -117,10 +118,15 @@ namespace MQTT.Broker.Network
 
         private void ProcessItem(Task<CommandRead> namedConnectionTask)
         {
-            if (namedConnectionTask.Status == TaskStatus.RanToCompletion)
+            switch (namedConnectionTask.Status)
             {
-                namedConnectionTask.Result.Connection.Deliver(namedConnectionTask.Result.Command);
-                QueueReadCommand(namedConnectionTask.Result.Connection);
+                case TaskStatus.Faulted:
+                    System.Diagnostics.Trace.WriteLine(string.Format("ERROR: {0}", namedConnectionTask.Exception));
+                    return;
+                case TaskStatus.RanToCompletion:
+                    namedConnectionTask.Result.Connection.Deliver(namedConnectionTask.Result.Command);
+                    QueueReadCommand(namedConnectionTask.Result.Connection);
+                    break;
             }
         }
 
@@ -145,10 +151,10 @@ namespace MQTT.Broker.Network
             {
                 _runningCommands.Add(Task.Factory.StartNew<CommandRead>(() =>
                         {
-                            ICommandReader reader = Factory.Get<ICommandReader>();
+                            ICommandReader reader = BrokerFactory.Get<ICommandReader>();
                             MqttCommand cmd = reader.Read(connection.Connection);
                             return new CommandRead(cmd, connection);
-                        }));
+                        }, TaskCreationOptions.LongRunning));
             }
         }
 

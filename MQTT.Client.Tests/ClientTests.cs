@@ -14,20 +14,12 @@ namespace MQTT.Client.Tests
     [TestClass]
     public class ClientTests
     {
-        [TestInitialize]
-        public void Initialize()
-        {
-            OldFactory.Initialize(
-                new Dictionary<Type, Type>
-                {
-                    { typeof(IMqttBroker), typeof(MockMqttBroker) },
-                });
-        }
-
         [TestMethod]
         public void Connect()
         {
-            Client c = new Client("clientid");
+            Client c = new Client(new MockMqttBroker());
+            c.ClientId = "clientId";
+
             Assert.IsFalse(c.IsConnected);
             c.Connect(new IPEndPoint(IPAddress.Loopback, 1883)).Wait();
             Assert.IsTrue(c.IsConnected);

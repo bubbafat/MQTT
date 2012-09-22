@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using MQTT.Types;
 using MQTT.Commands;
 using MQTT.Broker.StateMachines;
+using MQTT.Domain;
 
 namespace MQTT.Broker.Network
 {
@@ -15,7 +16,7 @@ namespace MQTT.Broker.Network
         public string ClientId { get; private set; }
         public NetworkConnection Connection { get; private set; }
 
-        readonly ConcurrentDictionary<ushort, Action<MqttCommand>> _inflight = new ConcurrentDictionary<ushort, Action<MqttCommand>>();
+        readonly ConcurrentDictionary<ushort, Action<MqttCommand>> _desires = new ConcurrentDictionary<ushort, Action<MqttCommand>>();
         readonly object _lock = new object();
 
         public NamedConnection(string clientId, NetworkConnection connection)
@@ -24,40 +25,47 @@ namespace MQTT.Broker.Network
             Connection = connection;
         }
 
-        internal void Deliver(Commands.MqttCommand cmd)
+        internal Task Deliver(Commands.MqttCommand cmd)
         {
             switch (cmd.CommandMessage)
             {
                 case CommandMessage.PUBLISH:
-                    StartNew(new PublishReceive(cmd, this));
-                    break;
+                    return StartNew(new PublishReceive(cmd, this));
                 case CommandMessage.SUBSCRIBE:
-                    StartNew(new SubscribeReceive(cmd, this));
-                    break;
+                    return StartNew(new SubscribeReceive(cmd, this));
                 case CommandMessage.PINGREQ:
-                    StartNew(new PingReceived(cmd, this));
-                    break;
+                    return StartNew(new PingReceived(cmd, this));
                 case CommandMessage.DISCONNECT:
-                    StartNew(new DisconnectReceived(cmd, this));
-                    break;
+                    return StartNew(new DisconnectReceived(cmd, this));
                 case CommandMessage.UNSUBSCRIBE:
-                    StartNew(new UnsubscribeReceived(cmd, this));
-                    break;
+                    return StartNew(new UnsubscribeReceived(cmd, this));
                 case CommandMessage.PUBACK:
                 case CommandMessage.PUBCOMP:
                 case CommandMessage.PUBREC:
                 case CommandMessage.PUBREL:
-                    lock (_lock)
+                    var tcsRan = new TaskCompletionSource<object>();
+                    try
                     {
-                        Action<MqttCommand> toRun;
-                        if (_inflight.TryRemove(cmd.MessageId.Value, out toRun))
+                        lock (_lock)
                         {
-                            toRun(cmd);
+                            Action<MqttCommand> toRun;
+                            if (_desires.TryRemove(cmd.MessageId.Value, out toRun))
+                            {
+                                toRun(cmd);
+                            }
                         }
+
+                        tcsRan.SetResult(null);
                     }
-                    break;
+                    catch (Exception ex)
+                    {
+                        tcsRan.SetException(ex);
+                    }
+                    return tcsRan.Task;
                 default:
-                    throw new InvalidOperationException("Nope!");
+                    var tcsEx = new TaskCompletionSource<object>();
+                    tcsEx.SetException(new InvalidOperationException("Nope!"));
+                    return tcsEx.Task;
             }
         }
 
@@ -90,23 +98,26 @@ namespace MQTT.Broker.Network
             }
         }
 
-        private void StartNew(StateMachine machine)
+        private Task StartNew(StateMachine machine)
         {
-            machine.Start();
+            return Task.Factory.StartNew(() =>
+                {
+                    machine.Start();
+                }, TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness);
         }
 
         internal void Desire(ushort messageId, Action<MqttCommand> callback)
         {
             lock (_lock)
             {
-                _inflight.AddOrUpdate(messageId, callback, (key, old) => callback);
+                _desires.AddOrUpdate(messageId, callback, (key, old) => callback);
             }
         }
 
-        internal Task Send(MqttCommand command)
+        internal void Send(MqttCommand command)
         {
-            ICommandWriter writer = Factory.Get<ICommandWriter>();
-            return writer.SendAsync(Connection, command);
+            ICommandWriter writer = BrokerFactory.Get<ICommandWriter>();
+            writer.Send(Connection, command);
         }
 
         internal IActiveConnectionManager Manager { get; set; }

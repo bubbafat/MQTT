@@ -26,10 +26,10 @@ namespace MQTT.Domain.StateMachines
             return Send(command)
                 .ContinueWith((task) =>
                     WaitFor(CommandMessage.CONNACK, MessageId.Any, TimeSpan.FromSeconds(30)), 
-                    TaskContinuationOptions.OnlyOnRanToCompletion)
+                    TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
                 .ContinueWith((task) =>
                     onSuccess(command),
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                    TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
         }
     }
 }

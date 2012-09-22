@@ -28,22 +28,14 @@ namespace MQTT.Broker.StateMachines
                     _connection.Complete(_command);
                     break;
                 case QualityOfService.AtLeastOnce:
-                    _connection.Send(new PubAck(_command.MessageId))
-                        .ContinueWith((task) =>
-                            _connection.Complete(_command),
-                            TaskContinuationOptions.OnlyOnRanToCompletion);
+                    _connection.Send(new PubAck(_command.MessageId));
+                    _connection.Complete(_command);
                     break;
                 case QualityOfService.ExactlyOnce:
-                    _connection.Send(new PubRec(_command.MessageId))
-                        .ContinueWith((task) => 
-                            WaitFor(_connection, _command.MessageId.Value, CommandMessage.PUBREL),
-                            TaskContinuationOptions.OnlyOnRanToCompletion)
-                        .ContinueWith((task) =>
-                            _connection.Send(new PubComp(_command.MessageId)),
-                            TaskContinuationOptions.OnlyOnRanToCompletion)
-                        .ContinueWith((task) =>
-                            _connection.Complete(_command),
-                            TaskContinuationOptions.OnlyOnRanToCompletion);
+                    _connection.Send(new PubRec(_command.MessageId));
+                    WaitFor(_connection, _command.MessageId.Value, CommandMessage.PUBREL).Await();
+                    _connection.Send(new PubComp(_command.MessageId));
+                    _connection.Complete(_command);
                     break;
                 default:
                     throw new InvalidOperationException("Unknown QoS");

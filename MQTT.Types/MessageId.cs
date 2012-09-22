@@ -39,12 +39,12 @@ namespace MQTT.Types
 
         public static bool operator ==(MessageId id1, MessageId id2)
         {
-            return id1.Value == id2.Value;
+            return id1.Equals(id2);
         }
 
         public static bool operator !=(MessageId id1, MessageId id2)
         {
-            return id1.Value != id2.Value;
+            return !id1.Equals(id2);
         }
 
         public override string ToString()

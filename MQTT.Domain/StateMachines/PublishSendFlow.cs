@@ -28,29 +28,29 @@ namespace MQTT.Domain.StateMachines
                     return Send(command)
                         .ContinueWith((task) =>
                             onSuccess(command),
-                            TaskContinuationOptions.OnlyOnRanToCompletion);
+                            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
                 case QualityOfService.AtLeastOnce:
                     return Send(command)
                         .ContinueWith((task) =>
                             WaitFor(CommandMessage.PUBACK, command.MessageId, TimeSpan.FromSeconds(60)),
-                            TaskContinuationOptions.OnlyOnRanToCompletion)
+                            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
                         .ContinueWith((task) =>
                             onSuccess(command),
-                            TaskContinuationOptions.OnlyOnRanToCompletion);
+                            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
                 case QualityOfService.ExactlyOnce:
                     return Send(command)
                         .ContinueWith((task) =>
                             WaitFor(CommandMessage.PUBREC, command.MessageId, TimeSpan.FromSeconds(60)),
-                            TaskContinuationOptions.OnlyOnRanToCompletion)
+                            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
                         .ContinueWith((task) =>
                             Send(new PubRel(command.MessageId)),
-                            TaskContinuationOptions.OnlyOnRanToCompletion)
+                            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
                         .ContinueWith((task) =>
                             WaitFor(CommandMessage.PUBCOMP, command.MessageId, TimeSpan.FromSeconds(60)),
-                            TaskContinuationOptions.OnlyOnRanToCompletion)
+                            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
                         .ContinueWith((task) =>
                             onSuccess(command),
-                            TaskContinuationOptions.OnlyOnRanToCompletion);
+                            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
                 default:
                     throw new InvalidOperationException("Unknown QoS");
             }

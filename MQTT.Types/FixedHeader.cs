@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
+using System.Net.Sockets;
 
 namespace MQTT.Types
 {
@@ -46,9 +47,18 @@ namespace MQTT.Types
             return bytes.ToArray();
         }
 
-        public static FixedHeader FromStream(Stream stream)
+        public static FixedHeader Load(NetworkConnection connection)
         {
-            byte firstByte = stream.ReadBytesOrFailAsync(1).Await<byte[]>().Result[0];
+            byte firstByte;
+
+            if (connection.Available >= 1)
+            {
+                firstByte = connection.Stream.ReadByteOrFail();
+            }
+            else
+            {
+                firstByte = connection.Stream.ReadBytesOrFailAsync(1).Await<byte[]>().Result[0];
+            }
 
             FixedHeader header = new FixedHeader();
             header.Message = (CommandMessage)((firstByte & 0xF0) >> 4);
@@ -56,23 +66,7 @@ namespace MQTT.Types
             header.QualityOfService = (QualityOfService)((firstByte & 0x6) >> 1);
             header.Retain = (firstByte & 0x1) == 0x1;
 
-            header.RemainingLength = VariableLengthInteger.FromStream(stream);
-
-            return header;
-        }
-
-
-        public static FixedHeader FromSocket(System.Net.Sockets.Socket socket)
-        {
-            byte firstByte = socket.ReadBytes(1)[0];
-
-            FixedHeader header = new FixedHeader();
-            header.Message = (CommandMessage)((firstByte & 0xF0) >> 4);
-            header.Duplicate = (firstByte & 0x8) == 0x8;
-            header.QualityOfService = (QualityOfService)((firstByte & 0x6) >> 1);
-            header.Retain = (firstByte & 0x1) == 0x1;
-
-            header.RemainingLength = VariableLengthInteger.FromSocket(socket);
+            header.RemainingLength = VariableLengthInteger.Load(connection);
 
             return header;
         }

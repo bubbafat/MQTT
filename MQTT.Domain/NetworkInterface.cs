@@ -13,82 +13,47 @@ namespace MQTT.Domain
     public sealed class NetworkInterface : INetworkInterface
     {
         Thread _recvThread;
-        Socket _socket;
-        readonly object _socketReadLock = new object();
-        readonly object _socketWriteLock = new object();
+        NetworkConnection _connection;
+        ICommandReader _reader;
+        ICommandWriter _writer;
 
-        public NetworkInterface(Socket socket)
+        public NetworkInterface(ICommandReader reader, ICommandWriter writer)
         {
-            _socket = socket;
+            _reader = reader;
+            _writer = writer;
         }
 
         public void Disconnect()
         {
             _recvThread.Abort();
-            _socket.Close();
-        }
-
-        public Socket Socket
-        {
-            get
-            {
-                return _socket;
-            }
+            _connection.Disconnect();
         }
 
         public MqttCommand ReadCommand()
         {
-            FixedHeader header;
-            byte[] data = null;
+            return _reader.Read(_connection);
+        }
 
-            header = FixedHeader.FromSocket(_socket);
-
-            if (header.RemainingLength > 0)
+        public Task Send(MqttCommand command)
+        {
+            var tcs = new TaskCompletionSource<object>();
+            try
             {
-                data = _socket.ReadBytes(header.RemainingLength);
+                _writer.Send(_connection, command);
+                tcs.SetResult(null);
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
             }
 
-            return MqttCommand.Create(header, data);
+            return tcs.Task;
         }
 
-        public System.Threading.Tasks.Task Send(MqttCommand command)
+        public void Start(TcpClient client, Action<MqttCommand> onIncomingMessage)
         {
-            return Task.Factory.StartNew(() =>
-            {
-                System.Diagnostics.Debug.WriteLine("SEND: {0} ({1})", command.CommandMessage, command.MessageId);
+            _connection= new NetworkConnection(client);
 
-                byte[] buffer = command.ToByteArray();
-
-                int start = 0;
-
-                lock (_socketWriteLock)
-                {
-                    while (start < buffer.Length)
-                    {
-                        int end = buffer.Length - start;
-                        Task<int> sendResult = _socket.SendAsync(buffer, start, end);
-                        sendResult.Wait();
-                        if (sendResult.IsFaulted)
-                        {
-                            throw sendResult.Exception;
-                        }
-
-                        if (sendResult.IsCompleted)
-                        {
-                            if (sendResult.Result == 0)
-                            {
-                                throw new InvalidOperationException("Stream unexpectedly closed!");
-                            }
-
-                            start += sendResult.Result;
-                        }
-                    }
-                }
-            });
-        }
-
-        public void Start(Action<MqttCommand> onIncomingMessage)
-        {
             _recvThread = new Thread(() =>
                 {
                     ReceiveLoop(onIncomingMessage);
@@ -101,25 +66,36 @@ namespace MQTT.Domain
         {
             get
             {
-                return _socket.Connected;
+                return _connection.Connected;
             }
         }
 
         public void Dispose()
         {
-            using (_socket) { }
+            // do nothing
         }
 
         private void ReceiveLoop(Action<MqttCommand> recv)
         {
-            while (true)
+            try
             {
-                MqttCommand command = ReadCommand();
-
-                if (recv != null)
+                while (true)
                 {
-                    recv(command);
+                    MqttCommand command = ReadCommand();
+
+                    if (recv != null)
+                    {
+                        recv(command);
+                    }
                 }
+            }
+            catch (Exception)
+            {
+                if (_connection.Connected)
+                {
+                    _connection.Disconnect();
+                }
+                // swallow and let the thread die naturally
             }
         }
     }

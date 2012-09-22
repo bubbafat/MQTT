@@ -41,7 +41,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ClientCommandEventArgs.cs" />
+    <Compile Include="CommandReader.cs" />
+    <Compile Include="CommandWriter.cs" />
     <Compile Include="DesireCache.cs" />
+    <Compile Include="ICommandReader.cs" />
+    <Compile Include="ICommandWriter.cs" />
     <Compile Include="IMqttBroker.cs" />
     <Compile Include="INetworkInterface.cs" />
     <Compile Include="MqttNetworkBroker.cs" />

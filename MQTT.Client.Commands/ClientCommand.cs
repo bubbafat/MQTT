@@ -84,6 +84,15 @@ namespace MQTT.Commands
             set;
         }
 
+        public override string ToString()
+        {
+            return string.Format("{0} ({1} : {2}) {3}",
+                CommandMessage,
+                (MessageId != null) ? MessageId.Value.ToString() : "<missing>",
+                Header.QualityOfService,
+                (Payload != null) ? BitConverter.ToString(Payload).Replace("-", " ") : "<null>");
+        }
+
         public static MqttCommand Create(FixedHeader header, byte[] data)
         {
             switch (header.Message)

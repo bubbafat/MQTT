@@ -70,7 +70,7 @@ namespace MQTT.Broker.Network
             Task stop = Task.Factory.StartNew(() =>
                 {
                     stopThread.WaitOne();
-                });
+                }, TaskCreationOptions.LongRunning);
 
             List<Task<NamedConnection>> pendingConnects = new List<Task<NamedConnection>>();
 
@@ -79,7 +79,7 @@ namespace MQTT.Broker.Network
                 Task<NetworkConnection> conn = Task.Factory.StartNew<NetworkConnection>(() =>
                     {
                         return _incomingConnections.Dequeue();
-                    });
+                    }, TaskCreationOptions.LongRunning);
 
                 List<Task> allTasks = new List<Task>();
                 allTasks.Add(conn);
@@ -124,17 +124,16 @@ namespace MQTT.Broker.Network
 
         private Task<NamedConnection> HandleNewConnection(Task<NetworkConnection> conn)
         {
+
             switch (conn.Status)
             {
                 case TaskStatus.Faulted:
                     throw conn.Exception;
-                case TaskStatus.Canceled:
-                    return Task.Factory.StartNew<NamedConnection>(() => null);
                 case TaskStatus.RanToCompletion:
                     NetworkConnection connection = conn.Result;
                     return Task.Factory.StartNew<NamedConnection>(() =>
                         {
-                            ConnectReceive connRecv = Factory.Get<ConnectReceive>();
+                            ConnectReceive connRecv = BrokerFactory.Get<ConnectReceive>();
                             return connRecv.Run(connection);
                         });
                 default:

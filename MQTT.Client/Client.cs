@@ -16,7 +16,6 @@ namespace MQTT.Client
 
     public sealed class Client : IDisposable
     {
-        string _clientId;
         IMqttBroker _broker;
         Timer _timer;
         StateMachineManager _manager;
@@ -25,12 +24,17 @@ namespace MQTT.Client
         private object _lastHeaderLock = new object();
         private DateTime _lastHeard = DateTime.MinValue;
 
-        public Client(string clientId)
+        public Client(IMqttBroker broker)
         {
-            _broker = OldFactory.GetInstance<IMqttBroker>();
+            _broker = broker;
             _broker.OnMessageReceived += new MessageReceivedCallback(_broker_OnMessageReceived);
             _manager = new StateMachineManager(_broker);
-            _clientId = clientId;
+        }
+
+        public string ClientId
+        {
+            get;
+            set;
         }
 
         public Task Connect(IPEndPoint endpoint)
@@ -39,7 +43,7 @@ namespace MQTT.Client
             _broker.Connect(endpoint);
 
             ConnectSendFlow connect = new ConnectSendFlow(_manager);
-            return connect.Start(new Commands.Connect(_clientId, 300),
+            return connect.Start(new Commands.Connect(ClientId, 300),
                 (startCmd) =>
                 {
                     ResetTimer();
@@ -49,7 +53,7 @@ namespace MQTT.Client
 
         public void Disconnect(TimeSpan lengthBeforeForce)
         {
-            _broker.Send(new Commands.Disconnect()).Wait(lengthBeforeForce);
+            _broker.Send(new Commands.Disconnect()).Await();
             _broker.Disconnect();
         }
 
@@ -73,9 +77,9 @@ namespace MQTT.Client
             return flow.Start(s, completed);
         }
 
-        public Task Unsubscribe(string[] topics)
+        public void Unsubscribe(string[] topics)
         {
-            return _broker.Send(new Commands.Unsubscribe(topics));
+            _broker.Send(new Commands.Unsubscribe(topics)).Await();
         }
 
         public bool IsConnected
@@ -145,7 +149,7 @@ namespace MQTT.Client
             {
                 if (IsConnected && _lastHeard < DateTime.UtcNow.AddMinutes(4))
                 {
-                    _broker.Send(new Commands.PingReq());
+                    _broker.Send(new Commands.PingReq()).Await();
                 }
             }
         }

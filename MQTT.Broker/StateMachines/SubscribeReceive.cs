@@ -45,10 +45,8 @@ namespace MQTT.Broker.StateMachines
                 ack.Grants.Add(QualityOfService.AtMostOnce);
             }
 
-            _connection.Send(new SubAck(_command.MessageId))
-                .ContinueWith((task) =>
-                    _connection.Complete(_command),
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
+            _connection.Send(new SubAck(_command.MessageId));
+            _connection.Complete(_command);
         }
     }
 }

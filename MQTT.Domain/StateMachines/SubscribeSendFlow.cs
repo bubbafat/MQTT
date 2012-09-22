@@ -21,20 +21,20 @@ namespace MQTT.Domain.StateMachines
             {
                 release = (MqttCommand p) => { };
             }
-
             switch (msg.Header.QualityOfService)
             {
-                case QualityOfService.AtMostOnce:
-                    return Task.Factory.StartNew(() => { throw new ProtocolException(msg.CommandMessage); });
                 case QualityOfService.AtLeastOnce:
                     return Send(msg)
                         .ContinueWith((task) =>
                             WaitFor(CommandMessage.SUBACK, msg.MessageId, TimeSpan.FromSeconds(30)))
                         .ContinueWith((task) =>
                             release(msg),
-                            TaskContinuationOptions.OnlyOnRanToCompletion);
+                            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
+                case QualityOfService.AtMostOnce:
                 case QualityOfService.ExactlyOnce:
-                    return Task.Factory.StartNew(() => { throw new ProtocolException(msg.CommandMessage); });
+                    var tcs = new TaskCompletionSource<MqttCommand>();
+                    tcs.SetException(new ProtocolException(msg.CommandMessage));
+                    return tcs.Task;
                 default:
                     throw new InvalidOperationException("Unknown QoS");
             }

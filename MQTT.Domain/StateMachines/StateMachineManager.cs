@@ -45,29 +45,19 @@ namespace MQTT.Domain.StateMachines
             switch (command.CommandMessage)
             {
                 case CommandMessage.CONNECT:
-                    return Task.Factory.StartNew(() =>
-                    {
-                        ConnectReceiveFlow flow = new ConnectReceiveFlow(this);
-                        return flow.Start(command, onSuccess);
-                    });
+                    ConnectReceiveFlow connFlow = new ConnectReceiveFlow(this);
+                    return connFlow.Start(command, onSuccess);
                 case CommandMessage.PUBLISH:
-                    return Task.Factory.StartNew(() =>
-                        {
-                            PublishReceiveFlow flow = new PublishReceiveFlow(this);
-                            return flow.Start(command, onSuccess);
-                        });
+                    PublishReceiveFlow pubFlow = new PublishReceiveFlow(this);
+                    return pubFlow.Start(command, onSuccess);
                 case CommandMessage.SUBSCRIBE:
-                    return Task.Factory.StartNew(() =>
-                    {
-                        SubscribeFlow flow = new SubscribeFlow(this);
-                        return flow.Start(command, onSuccess);
-                    });
+                    SubscribeFlow subFlow = new SubscribeFlow(this);
+                    return subFlow.Start(command, onSuccess);
 
                 default:
-                    return Task.Factory.StartNew(() =>
-                        {
-                            throw new InvalidOperationException("Unhandled command type");
-                        });
+                    var tcs = new TaskCompletionSource<object>();
+                    tcs.SetException(new InvalidOperationException("Unhandled command type"));
+                    return tcs.Task;
             }
         }
 
@@ -79,7 +69,9 @@ namespace MQTT.Domain.StateMachines
 
                 if (maybeLoved != null)
                 {
-                    return Task<MqttCommand>.Factory.StartNew(() => maybeLoved);
+                    var tcs = new TaskCompletionSource<MqttCommand>();
+                    tcs.SetResult(maybeLoved);
+                    return tcs.Task;
                 }
                 else
                 {

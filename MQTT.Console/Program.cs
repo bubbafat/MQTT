@@ -9,6 +9,7 @@ using System.Threading;
 using MQTT.Domain;
 using MQTT.Commands;
 using MQTT.Client;
+using MQTT.Client.Console;
 
 namespace MQTT.ConsoleApp
 {
@@ -19,13 +20,7 @@ namespace MQTT.ConsoleApp
 
         static void Main(string[] args)
         {
-            OldFactory.Initialize(
-                new Dictionary<Type, Type>
-                {
-                    { typeof(IMqttBroker), typeof(MqttNetworkBroker) },
-                });
-
-            Thread[] listeners = new Thread[2];
+            Thread[] listeners = new Thread[100];
 
             for (int i = 0; i < listeners.Length; i++)
             {
@@ -59,8 +54,26 @@ namespace MQTT.ConsoleApp
 
         private static void WriterAction()
         {
-            using (MQTT.Client.Client c = new MQTT.Client.Client("writer"))
+            while (true)
             {
+                try
+                {
+                    DoWriteAction();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                    Thread.Sleep(5000);
+                }
+            }
+        }
+
+        private static void DoWriteAction()
+        {
+            using (MQTT.Client.Client c = Factory.Get<MQTT.Client.Client>())
+            {
+                c.ClientId = "writer";
+
                 c.OnUnsolicitedMessage += new UnsolicitedMessageCallback(c_OnUnsolicitedMessage);
 
                 IPAddress address = Dns.GetHostAddresses(server).Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).First();
@@ -79,8 +92,10 @@ namespace MQTT.ConsoleApp
                 {
                     count++;
                     Console.WriteLine("WRITER writing...");
-                    c.Publish("root", string.Format("This is message {0}!", count), QualityOfService.ExactlyOnce, null).Wait();
+                    c.Publish("root", string.Format("This is message {0}!", count), QualityOfService.ExactlyOnce, null).Await();
                     Console.WriteLine("WRITER wrote...");
+
+                    Thread.Sleep(10000);
                 }
 
                 c.Disconnect(TimeSpan.FromSeconds(5));
@@ -89,10 +104,24 @@ namespace MQTT.ConsoleApp
 
         private static void ThreadAction(object name)
         {
+            try
+            {
+                DoThreadAction(name);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        private static void DoThreadAction(object name)
+        {
             string lname = string.Format("listener {0}", name.ToString());
 
-            using (MQTT.Client.Client c = new MQTT.Client.Client(lname))
+            using (MQTT.Client.Client c = Factory.Get<MQTT.Client.Client>())
             {
+                c.ClientId = lname;
+
                 c.OnUnsolicitedMessage += new UnsolicitedMessageCallback(c_OnUnsolicitedMessage);
 
                 IPAddress address = Dns.GetHostAddresses(server).Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).First();
@@ -114,13 +143,14 @@ namespace MQTT.ConsoleApp
 
                 while (true)
                 {
-                    Thread.Sleep(100);
+                    Thread.Sleep(1000);
                 }
 
                 c.Disconnect(TimeSpan.FromSeconds(5));
             }
         }
 
+        readonly static object conLock = new object();
         static void c_OnUnsolicitedMessage(object sender, ClientCommandEventArgs e)
         {
             MqttCommand command = e.Command;
@@ -128,38 +158,30 @@ namespace MQTT.ConsoleApp
             Publish p = command as Publish;
             if (p != null)
             {
-                if (p.Header.Duplicate)
+                lock (conLock)
                 {
-                    Console.WriteLine("!!! DUPLICATE !!!");
-                }
-
-                Console.WriteLine("{0}", p.Topic);
-                foreach (char c in Encoding.ASCII.GetChars(p.Message))
-                {
-                    if (!char.IsControl(c))
+                    if (p.Header.Duplicate)
                     {
-                        Console.Write(c);
+                        Console.WriteLine("!!! DUPLICATE !!!");
                     }
-                }
 
-                Console.WriteLine();
+                    Console.WriteLine("{0}", p.Topic);
+                    foreach (char c in Encoding.ASCII.GetChars(p.Message))
+                    {
+                        if (!char.IsControl(c))
+                        {
+                            Console.Write(c);
+                        }
+                    }
+
+                    Console.WriteLine();
+                }
             }
         }
 
         static void DemandWorked(Task task)
         {
-            task.Wait();
-            if (task.IsFaulted)
-            {
-                Console.WriteLine(task.Exception.ToString());
-                throw task.Exception;
-            }
-
-            if (!task.IsCompleted)
-            {
-                Console.WriteLine("Task did not complete?  WTF???");
-                throw new Exception("WTF?");
-            }
+            task.Await();
         }
     }
 }

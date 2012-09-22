@@ -33,10 +33,18 @@ namespace MQTT.Client.Tests
 
         public Task Send(MqttCommand command)
         {
-            return Task.Factory.StartNew(() =>
-                {
-                    EnqueueResponse(command);
-                });
+            var tcs = new TaskCompletionSource<object>();
+            try
+            {
+                EnqueueResponse(command);
+                tcs.SetResult(null);
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+
+            return tcs.Task;
         }
 
         public Task<MqttCommand> ReceiveUnsolicited()
@@ -86,5 +94,10 @@ namespace MQTT.Client.Tests
         }
 
         public event MessageReceivedCallback OnMessageReceived;
+
+        public void Start(System.Net.Sockets.TcpClient client, Action<MqttCommand> onIncomingMessage)
+        {
+            // do nothing
+        }
     }
 }

@@ -14,7 +14,7 @@ namespace mqtt_broker
     {
         static void Main(string[] args)        
         {
-            using (MqttBroker broker = Factory.Get<MqttBroker>())
+            using (MqttBroker broker = BrokerFactory.Get<MqttBroker>())
             {
                 IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, 1883);
                 broker.Listen(endpoint);

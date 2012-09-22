@@ -46,23 +46,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActiveSubscriptions.cs" />
-    <Compile Include="Factory.cs" />
+    <Compile Include="BrokerFactory.cs" />
     <Compile Include="Network\ActiveConnectionManager.cs" />
     <Compile Include="Network\BlockingQueue.cs" />
     <Compile Include="Network\ClientConnectedEventArgs.cs" />
     <Compile Include="Network\ClientDisconnectedEventArgs.cs" />
-    <Compile Include="Network\CommandReader.cs" />
-    <Compile Include="Network\CommandWriter.cs" />
     <Compile Include="Network\IActiveConnectionManager.cs" />
-    <Compile Include="Network\ICommandReader.cs" />
-    <Compile Include="Network\ICommandWriter.cs" />
     <Compile Include="Network\IConnectionManager.cs" />
     <Compile Include="MqttBroker.cs" />
     <Compile Include="Network\INewConnectionManager.cs" />
     <Compile Include="Network\ListenerExceptionEventArgs.cs" />
     <Compile Include="Network\MessageReceivedEventArgs.cs" />
     <Compile Include="Network\NamedConnection.cs" />
-    <Compile Include="Network\NetworkConnection.cs" />
     <Compile Include="Network\NewConnectionManager.cs" />
     <Compile Include="StateMachines\DisconnectReceived.cs" />
     <Compile Include="StateMachines\PingReceived.cs" />

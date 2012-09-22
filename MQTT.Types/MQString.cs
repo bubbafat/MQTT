@@ -11,7 +11,7 @@ namespace MQTT.Types
         public static string FromStream(Stream data)
         {
             ushort length = data.ReadUint16();
-            return Encoding.UTF8.GetString(data.ReadBytesOrFailAsync(length).Await<byte[]>().Result);
+            return Encoding.UTF8.GetString(data.ReadBytesOrFail(length));
         }
 
         public static byte[] ToByteArray(string str)

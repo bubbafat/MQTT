@@ -6,6 +6,8 @@ using System.Net.Sockets;
 using MQTT.Commands;
 using MQTT.Broker.Network;
 using System.Threading.Tasks;
+using MQTT.Types;
+using MQTT.Domain;
 
 namespace MQTT.Broker.StateMachines
 {
@@ -30,18 +32,9 @@ namespace MQTT.Broker.StateMachines
 
             Connect connect = (Connect)command;
 
-            Task t = _writer.SendAsync(connection, new ConnAck());
-            t.Wait();
-            switch (t.Status)
-            {
-                case TaskStatus.Faulted:
-                    throw t.Exception;
-                case TaskStatus.RanToCompletion:
-                    return new NamedConnection(connect.ClientIdentifier, connection);
-                default:
-                    throw new InvalidOperationException("I don\'t know what to tell you, bud");
-            }
+            _writer.Send(connection, new ConnAck());
 
+            return new NamedConnection(connect.ClientIdentifier, connection);
         }
     }
 }

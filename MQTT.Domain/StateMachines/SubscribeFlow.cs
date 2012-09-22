@@ -24,12 +24,13 @@ namespace MQTT.Domain.StateMachines
 
             switch (msg.Header.QualityOfService)
             {
-                case QualityOfService.AtMostOnce:
-                    return Task.Factory.StartNew(() => { throw new ProtocolException(msg.CommandMessage); });
                 case QualityOfService.AtLeastOnce:
                     return ProcessSubscription(msg, release);
+                case QualityOfService.AtMostOnce:
                 case QualityOfService.ExactlyOnce:
-                    return Task.Factory.StartNew(() => { throw new ProtocolException(msg.CommandMessage); });
+                    var tcs = new TaskCompletionSource<MqttCommand>();
+                    tcs.SetException(new ProtocolException(msg.CommandMessage));
+                    return tcs.Task;
                 default:
                     throw new InvalidOperationException("Unknown QoS");
             }
@@ -47,7 +48,7 @@ namespace MQTT.Domain.StateMachines
             return Send(ack)
                 .ContinueWith((task) =>
                     Task.Factory.StartNew(() => release(msg)),
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                    TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
         }
     }
 }

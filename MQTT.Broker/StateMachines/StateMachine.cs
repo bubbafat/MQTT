@@ -34,7 +34,7 @@ namespace MQTT.Broker.StateMachines
                 {
                     connection.Desire(messageId, ready);
                     available.WaitOne();
-                });
+                }, TaskCreationOptions.LongRunning);
         }
     }
 }

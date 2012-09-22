@@ -91,7 +91,7 @@ namespace MQTT.Broker.Network
             Task cancel = Task.Factory.StartNew(() =>
             {
                 stopEvent.WaitOne();
-            });
+            }, TaskCreationOptions.LongRunning);
 
             try
             {
