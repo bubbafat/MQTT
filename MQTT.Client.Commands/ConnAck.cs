@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MQTT.Types;
-using MQTT.Commands;
+﻿using MQTT.Types;
 
 namespace MQTT.Commands
 {
     public class ConnAck : MqttCommand
     {
-        byte[] _variableHeader = new byte[2];
+        readonly byte[] _variableHeader = new byte[2];
 
         public ConnAck()
             : this(new FixedHeader(CommandMessage.CONNACK), null)

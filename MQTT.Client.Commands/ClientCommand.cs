@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using System.IO;
+using System.Globalization;
 using MQTT.Types;
 
 namespace MQTT.Commands
@@ -18,7 +15,7 @@ namespace MQTT.Commands
 
         public byte[] ToByteArray()
         {
-            List<byte> bytes = new List<byte>();
+            var bytes = new List<byte>();
 
             byte[] payload = Payload;
             byte[] vh = VariableHeader;
@@ -88,7 +85,7 @@ namespace MQTT.Commands
         {
             return string.Format("{0} ({1} : {2}) {3}",
                 CommandMessage,
-                (MessageId != null) ? MessageId.Value.ToString() : "<missing>",
+                (MessageId != null) ? MessageId.Value.ToString(CultureInfo.InvariantCulture) : "<missing>",
                 Header.QualityOfService,
                 (Payload != null) ? BitConverter.ToString(Payload).Replace("-", " ") : "<null>");
         }

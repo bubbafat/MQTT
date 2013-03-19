@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 using System.Timers;
-using MQTT.Domain.StateMachines;
-using MQTT.Domain;
 using MQTT.Commands;
+using MQTT.Domain;
+using MQTT.Domain.StateMachines;
 using MQTT.Types;
 
 namespace MQTT.Client
@@ -16,25 +14,37 @@ namespace MQTT.Client
 
     public sealed class Client : IDisposable
     {
-        IMqttBroker _broker;
-        Timer _timer;
-        StateMachineManager _manager;
-        bool _connAcked = false;
-        MessageIdSequence _idSeq = new MessageIdSequence();
-        private object _lastHeaderLock = new object();
+        private readonly IMqttBroker _broker;
+        private readonly MessageIdSequence _idSeq = new MessageIdSequence();
+        private readonly object _lastHeaderLock = new object();
+        private readonly StateMachineManager _manager;
+
+        private bool _connAcked;
         private DateTime _lastHeard = DateTime.MinValue;
+        private Timer _timer;
 
         public Client(IMqttBroker broker)
         {
             _broker = broker;
-            _broker.OnMessageReceived += new MessageReceivedCallback(_broker_OnMessageReceived);
+            _broker.OnMessageReceived += _broker_OnMessageReceived;
             _manager = new StateMachineManager(_broker);
         }
 
-        public string ClientId
+        public string ClientId { get; set; }
+
+        public bool IsConnected
         {
-            get;
-            set;
+            get { return _broker.IsConnected && _connAcked; }
+        }
+
+        public void Dispose()
+        {
+            using (_timer)
+            {
+            }
+            using (_broker)
+            {
+            }
         }
 
         public Task Connect(IPEndPoint endpoint)
@@ -42,61 +52,53 @@ namespace MQTT.Client
             _connAcked = false;
             _broker.Connect(endpoint);
 
-            ConnectSendFlow connect = new ConnectSendFlow(_manager);
-            return connect.Start(new Commands.Connect(ClientId, 300),
-                (startCmd) =>
-                {
-                    ResetTimer();
-                    _connAcked = true;
-                });
+            var connect = new ConnectSendFlow(_manager);
+            return connect.Start(new Connect(ClientId, 300),
+                                 startCmd =>
+                                     {
+                                         ResetTimer();
+                                         _connAcked = true;
+                                     });
         }
 
         public void Disconnect(TimeSpan lengthBeforeForce)
         {
-            _broker.Send(new Commands.Disconnect()).Await();
+            _broker.Send(new Disconnect()).Await();
             _broker.Disconnect();
         }
 
         public Task Publish(string topic, string message, QualityOfService qos, Action<MqttCommand> completed)
         {
-            Publish pub = new Commands.Publish(topic, message);
+            var pub = new Publish(topic, message);
             pub.Header.QualityOfService = qos;
             if (qos != QualityOfService.AtMostOnce)
             {
                 pub.MessageId = _idSeq.Next();
             }
 
-            PublishSendFlow publish = new PublishSendFlow(_manager);
+            var publish = new PublishSendFlow(_manager);
             return publish.Start(pub, completed);
         }
 
         public Task Subscribe(Subscription[] subs, Action<MqttCommand> completed)
         {
-            Subscribe s = new Commands.Subscribe(subs, _idSeq.Next());
-            SubscribeSendFlow flow = new SubscribeSendFlow(_manager);
+            var s = new Subscribe(subs, _idSeq.Next());
+            var flow = new SubscribeSendFlow(_manager);
             return flow.Start(s, completed);
         }
 
         public void Unsubscribe(string[] topics)
         {
-            _broker.Send(new Commands.Unsubscribe(topics)).Await();
-        }
-
-        public bool IsConnected
-        {
-            get
-            {
-                return _broker.IsConnected && _connAcked;
-            }
+            _broker.Send(new Unsubscribe(topics)).Await();
         }
 
         public event UnsolicitedMessageCallback OnUnsolicitedMessage;
 
-        void _broker_OnMessageReceived(object sender, ClientCommandEventArgs e)
+        private void _broker_OnMessageReceived(object sender, ClientCommandEventArgs e)
         {
             MqttCommand command = e.Command;
 
-            System.Diagnostics.Debug.WriteLine("RECV: {0} ({1})", command.CommandMessage, command.MessageId);
+            Debug.WriteLine("RECV: {0} ({1})", command.CommandMessage, command.MessageId);
 
             lock (_lastHeaderLock)
             {
@@ -118,15 +120,12 @@ namespace MQTT.Client
                     // ignore (we sent it) - eventually track
                     break;
                 default:
-                    _manager.StartNew(command, (MqttCommand cmd) =>
-                        {
-                            notify(cmd);
-                        });
+                    _manager.StartNew(command, Notify);
                     break;
             }
         }
 
-        private void notify(MqttCommand command)
+        private void Notify(MqttCommand command)
         {
             UnsolicitedMessageCallback callback = OnUnsolicitedMessage;
             if (callback != null)
@@ -137,27 +136,23 @@ namespace MQTT.Client
 
         private void ResetTimer()
         {
-            using (_timer) { }
-            _timer = new Timer(300 * 1000 * 0.80);
-            _timer.Elapsed += new ElapsedEventHandler(_timer_Elapsed);
+            using (_timer)
+            {
+            }
+            _timer = new Timer(300*1000*0.80);
+            _timer.Elapsed += _timer_Elapsed;
             _timer.Start();
         }
 
-        void _timer_Elapsed(object sender, ElapsedEventArgs e)
+        private void _timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             lock (_lastHeaderLock)
             {
                 if (IsConnected && _lastHeard < DateTime.UtcNow.AddMinutes(4))
                 {
-                    _broker.Send(new Commands.PingReq()).Await();
+                    _broker.Send(new PingReq()).Await();
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            using (_timer) { }
-            using (_broker) { }
         }
     }
 }

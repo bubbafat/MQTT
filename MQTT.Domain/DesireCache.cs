@@ -49,7 +49,7 @@ namespace MQTT.Domain
         {
             if (fulfilled == null)
             {
-                throw new ArgumentNullException("The fulfilled action cannot be null");
+                throw new ArgumentNullException("fulfilled", "The fulfilled action cannot be null");
             }
 
             Message = msg;

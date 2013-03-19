@@ -15,22 +15,20 @@ namespace MQTT.ConsoleApp
 {
     class Program
     {
-        static string server = "localhost"; // "test.mosquitto.org"
-        static int port = 1883;
+        private const string server = "test.mosquitto.org";
+        private const int port = 1883;
+        private readonly static string topic = Guid.NewGuid().ToString();
 
         static void Main(string[] args)
         {
-            Thread[] listeners = new Thread[100];
+            Thread[] listeners = new Thread[Environment.ProcessorCount * 2];
 
             for (int i = 0; i < listeners.Length; i++)
             {
                 listeners[i] = new Thread(ThreadAction);
             }
 
-            Thread writer = new Thread(() =>
-                {
-                    WriterAction();
-                });
+            Thread writer = new Thread(WriterAction);
 
             Console.WriteLine("STARTING...");
 
@@ -38,7 +36,7 @@ namespace MQTT.ConsoleApp
 
             for (int i = 0; i < listeners.Length; i++)
             {
-                listeners[i].Start(i);
+                listeners[i].Start(string.Format("{0}_LISTENER_{1}", topic, i));
             }
 
             writer.Join();
@@ -50,7 +48,7 @@ namespace MQTT.ConsoleApp
             Console.WriteLine("DONE");
         }
 
-        static ManualResetEvent waitForSubscribed = new ManualResetEvent(false);
+        static readonly ManualResetEvent waitForSubscribed = new ManualResetEvent(false);
 
         private static void WriterAction()
         {
@@ -72,11 +70,14 @@ namespace MQTT.ConsoleApp
         {
             using (MQTT.Client.Client c = Factory.Get<MQTT.Client.Client>())
             {
-                c.ClientId = "writer";
+                c.ClientId = string.Format("{0}_WRITER_{1}", topic, Thread.CurrentThread.ManagedThreadId);
 
                 c.OnUnsolicitedMessage += new UnsolicitedMessageCallback(c_OnUnsolicitedMessage);
 
-                IPAddress address = Dns.GetHostAddresses(server).Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).First();
+                IPAddress address =
+                    Dns.GetHostAddresses(server)
+                       .First(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+
                 IPEndPoint test = new IPEndPoint(address, port);
 
                 Console.WriteLine("WRITER connecting...");
@@ -92,10 +93,10 @@ namespace MQTT.ConsoleApp
                 {
                     count++;
                     Console.WriteLine("WRITER writing...");
-                    c.Publish("root", string.Format("This is message {0}!", count), QualityOfService.ExactlyOnce, null).Await();
+                    c.Publish(topic, string.Format("This is message {0}!", count), QualityOfService.ExactlyOnce, null).Await();
                     Console.WriteLine("WRITER wrote...");
 
-                    Thread.Sleep(10000);
+                    Thread.Sleep(5000);
                 }
 
                 c.Disconnect(TimeSpan.FromSeconds(5));
@@ -124,7 +125,10 @@ namespace MQTT.ConsoleApp
 
                 c.OnUnsolicitedMessage += new UnsolicitedMessageCallback(c_OnUnsolicitedMessage);
 
-                IPAddress address = Dns.GetHostAddresses(server).Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).First();
+                IPAddress address =
+                    Dns.GetHostAddresses(server)
+                       .First(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+
                 IPEndPoint test = new IPEndPoint(address, port);
 
                 Console.WriteLine("{0} connecting...", lname);
@@ -135,7 +139,7 @@ namespace MQTT.ConsoleApp
                 DemandWorked(c.Subscribe(
                     new Subscription[] 
                     {
-                        new Subscription("#", QualityOfService.ExactlyOnce), 
+                        new Subscription(topic, QualityOfService.ExactlyOnce), 
                     }, null));
                 Console.WriteLine("{0} subscribed...", lname);
 
@@ -162,10 +166,10 @@ namespace MQTT.ConsoleApp
                 {
                     if (p.Header.Duplicate)
                     {
-                        Console.WriteLine("!!! DUPLICATE !!!");
+                        Console.Write("!!! DUPLICATE !!! - ");
                     }
 
-                    Console.WriteLine("{0}", p.Topic);
+                    Console.WriteLine("TOPIC: {0}", p.Topic);
                     foreach (char c in Encoding.ASCII.GetChars(p.Message))
                     {
                         if (!char.IsControl(c))

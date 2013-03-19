@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using MQTT.Types;
 using System.IO;
 
@@ -20,7 +17,7 @@ namespace MQTT.Commands
 
         public byte[] ToByteArray()
         {
-            List<byte> bytes = new List<byte>();
+            var bytes = new List<byte>();
 
             bytes.AddRange(MQString.ToByteArray(Topic));
             bytes.Add((byte)QoS);
@@ -37,12 +34,12 @@ namespace MQTT.Commands
 
     public class Subscribe : MqttCommand
     {
-        List<Subscription> _topics = new List<Subscription>();
+        readonly List<Subscription> _topics = new List<Subscription>();
 
-        public Subscribe(Subscription[] subscriptions, MessageId messageId)
+        public Subscribe(IEnumerable<Subscription> subscriptions, MessageId messageId)
             : this(new FixedHeader(CommandMessage.SUBSCRIBE), null)
         {
-            this.Header.QualityOfService = QualityOfService.AtLeastOnce;
+            Header.QualityOfService = QualityOfService.AtLeastOnce;
 
             if (subscriptions != null)
             {
@@ -72,7 +69,7 @@ namespace MQTT.Commands
         {
             get
             {
-                List<byte> bytes = new List<byte>();
+                var bytes = new List<byte>();
                 foreach (Subscription sub in Subscriptions)
                 {
                     bytes.AddRange(sub.ToByteArray());
@@ -87,7 +84,7 @@ namespace MQTT.Commands
         {
             if (header.RemainingLength > 0)
             {
-                using (MemoryStream stream = new MemoryStream(data))
+                using (var stream = new MemoryStream(data))
                 {
                     if (Header.QualityOfService != QualityOfService.AtMostOnce)
                     {

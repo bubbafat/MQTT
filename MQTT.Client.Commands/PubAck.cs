@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MQTT.Types;
+﻿using MQTT.Types;
 using System.IO;
-using MQTT.Commands;
 
 namespace MQTT.Commands
 {
@@ -29,10 +24,10 @@ namespace MQTT.Commands
         {
             if (header.RemainingLength != 2 && data.Length != 2)
             {
-                throw new ProtocolException(this.CommandMessage, "Remaining length must be 2");
+                throw new ProtocolException(CommandMessage, "Remaining length must be 2");
             }
 
-            using (MemoryStream stream = new MemoryStream(data))
+            using (var stream = new MemoryStream(data))
             {
                 MessageId = MessageId.FromStream(stream);
             }

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Types;
 using System.IO;
 
@@ -39,7 +37,7 @@ namespace MQTT.Commands
         {
             get
             {
-                List<byte> bytes = new List<byte>(MQString.ToByteArray(Topic));
+                var bytes = new List<byte>(MQString.ToByteArray(Topic));
                 if (Header.QualityOfService == QualityOfService.AtLeastOnce ||
                     Header.QualityOfService == QualityOfService.ExactlyOnce)
                 {
@@ -66,7 +64,7 @@ namespace MQTT.Commands
         {
             if (header.RemainingLength > 0)
             {
-                using(MemoryStream stream = new MemoryStream(data))
+                using(var stream = new MemoryStream(data))
                 {
                     Topic = MQString.FromStream(stream);
 
@@ -76,14 +74,7 @@ namespace MQTT.Commands
                         MessageId = MessageId.FromStream(stream);
                     }
 
-                    if (stream.Position < stream.Length)
-                    {
-                        Message = stream.ReadRest();
-                    }
-                    else
-                    {
-                        Message = new byte[0];
-                    }
+                    Message = stream.Position < stream.Length ? stream.ReadRest() : new byte[0];
                 }
             }
         }

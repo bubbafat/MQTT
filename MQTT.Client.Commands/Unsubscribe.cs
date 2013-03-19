@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using MQTT.Types;
 using System.IO;
 
@@ -9,9 +6,9 @@ namespace MQTT.Commands
 {
     public class Unsubscribe : MqttCommand
     {
-        List<string> _topics = new List<string>();
+        readonly List<string> _topics = new List<string>();
 
-        public Unsubscribe(string[] topics)
+        public Unsubscribe(IEnumerable<string> topics)
             : this(new FixedHeader(CommandMessage.UNSUBSCRIBE), null)
         {
             if (topics != null)
@@ -33,7 +30,7 @@ namespace MQTT.Commands
         {
             get
             {
-                List<byte> bytes = new List<byte>();
+                var bytes = new List<byte>();
                 foreach (string topic in _topics)
                 {
                     bytes.AddRange(MQString.ToByteArray(topic));
@@ -48,7 +45,7 @@ namespace MQTT.Commands
         {
             if (header.RemainingLength > 0)
             {
-                using (MemoryStream stream = new MemoryStream(data))
+                using (var stream = new MemoryStream(data))
                 {
                     if (Header.QualityOfService != QualityOfService.AtMostOnce)
                     {

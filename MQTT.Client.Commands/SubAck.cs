@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using MQTT.Types;
 using System.IO;
 
@@ -29,13 +28,7 @@ namespace MQTT.Commands
         {
             get
             {
-                List<byte> bytes = new List<byte>();
-                foreach (QualityOfService qos in Grants)
-                {
-                    bytes.Add((byte)qos);
-                }
-
-                return bytes.ToArray();
+                return Grants.Select(qos => (byte) qos).ToArray();
             }
         }
 
@@ -47,7 +40,7 @@ namespace MQTT.Commands
                 throw new ArgumentNullException("data");
             }
 
-            using (MemoryStream stream = new MemoryStream(data))
+            using (var stream = new MemoryStream(data))
             {
                 _grants = new List<QualityOfService>();
 
