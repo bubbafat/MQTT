@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Types;
 using MQTT.Commands;
 
@@ -9,7 +7,7 @@ namespace MQTT.Domain
 {
     internal class DesireCache
     {
-        Dictionary<int, Desire> _desires = new Dictionary<int, Desire>();
+        readonly Dictionary<int, Desire> _desires = new Dictionary<int, Desire>();
 
         internal void AddAndRemoveDuplicates(Desire d)
         {
@@ -22,7 +20,7 @@ namespace MQTT.Domain
             _desires.Add(key, d);
         }
 
-        internal bool TryGetAndRemove(Types.CommandMessage commandMessage, Types.MessageId messageId, out Desire desire)
+        internal bool TryGetAndRemove(CommandMessage commandMessage, MessageId messageId, out Desire desire)
         {
             int key = GetKeyFrom(commandMessage, messageId);
             if (_desires.TryGetValue(key, out desire))
@@ -30,11 +28,8 @@ namespace MQTT.Domain
                 _desires.Remove(key);
                 return true;
             }
-            else
-            {
-                desire = null;
-                return false;
-            }
+            
+            return false;
         }
 
         private int GetKeyFrom(CommandMessage message, MessageId id)

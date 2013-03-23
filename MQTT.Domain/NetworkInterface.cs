@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net.Sockets;
 using MQTT.Commands;
 using System.Threading.Tasks;
@@ -14,8 +11,8 @@ namespace MQTT.Domain
     {
         Thread _recvThread;
         NetworkConnection _connection;
-        ICommandReader _reader;
-        ICommandWriter _writer;
+        readonly ICommandReader _reader;
+        readonly ICommandWriter _writer;
 
         public NetworkInterface(ICommandReader reader, ICommandWriter writer)
         {
@@ -54,10 +51,7 @@ namespace MQTT.Domain
         {
             _connection= new NetworkConnection(client);
 
-            _recvThread = new Thread(() =>
-                {
-                    ReceiveLoop(onIncomingMessage);
-                });
+            _recvThread = new Thread(() => ReceiveLoop(onIncomingMessage));
 
             _recvThread.Start();
         }

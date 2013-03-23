@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Commands;
-using System.Threading.Tasks;
 using MQTT.Types;
 
 namespace MQTT.Domain
 {
-    public class CommandWriter : ICommandWriter
+    public sealed class CommandWriter : ICommandWriter
     {
         void ICommandWriter.Send(NetworkConnection connection, MqttCommand command)
         {

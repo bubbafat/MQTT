@@ -1,22 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MQTT.Commands;
-using System.Net.Sockets;
+﻿using MQTT.Commands;
 using MQTT.Types;
 
 namespace MQTT.Domain
 {
-    public class CommandReader : ICommandReader
+    public sealed class CommandReader : ICommandReader
     {
         MqttCommand ICommandReader.Read(NetworkConnection connection)
         {
-            FixedHeader header;
             byte[] data = null;
-
-            header = FixedHeader.Load(connection);
+            FixedHeader header = FixedHeader.Load(connection);
 
             if (header.RemainingLength > 0)
             {
@@ -26,11 +18,11 @@ namespace MQTT.Domain
                 }
                 else
                 {
-                    data = connection.Stream.ReadBytesOrFailAsync(header.RemainingLength).Await<byte[]>().Result;
+                    data = connection.Stream.ReadBytesOrFailAsync(header.RemainingLength).Await().Result;
                 }
             }
 
-            MqttCommand cmd = MqttCommand.Create(header, data);
+            var cmd = MqttCommand.Create(header, data);
 
             System.Diagnostics.Debug.WriteLine("RECV {0}", cmd);
 
