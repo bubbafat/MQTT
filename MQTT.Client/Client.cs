@@ -14,7 +14,7 @@ namespace MQTT.Client
 
     public sealed class Client : IDisposable
     {
-        private readonly IMqttBroker _broker;
+        private readonly IMqttClient _client;
         private readonly MessageIdSequence _idSeq = new MessageIdSequence();
         private readonly object _lastHeaderLock = new object();
         private readonly StateMachineManager _manager;
@@ -23,34 +23,30 @@ namespace MQTT.Client
         private DateTime _lastHeard = DateTime.MinValue;
         private Timer _timer;
 
-        public Client(IMqttBroker broker)
+        public Client(IMqttClient client)
         {
-            _broker = broker;
-            _broker.OnMessageReceived += _broker_OnMessageReceived;
-            _manager = new StateMachineManager(_broker);
+            _client = client;
+            _client.OnMessageReceived += ClientOnMessageReceived;
+            _manager = new StateMachineManager(_client);
         }
 
         public string ClientId { get; set; }
 
         public bool IsConnected
         {
-            get { return _broker.IsConnected && _connAcked; }
+            get { return _client.IsConnected && _connAcked; }
         }
 
         public void Dispose()
         {
-            using (_timer)
-            {
-            }
-            using (_broker)
-            {
-            }
+            using (_timer) { }
+            using (_client) { }
         }
 
         public Task Connect(IPEndPoint endpoint)
         {
             _connAcked = false;
-            _broker.Connect(endpoint);
+            _client.Connect(endpoint);
 
             var connect = new ConnectSendFlow(_manager);
             return connect.Start(new Connect(ClientId, 300),
@@ -63,20 +59,24 @@ namespace MQTT.Client
 
         public void Disconnect(TimeSpan lengthBeforeForce)
         {
-            _broker.Send(new Disconnect()).Await();
-            _broker.Disconnect();
+            _client.Send(new Disconnect()).Await();
+            _client.Disconnect();
         }
 
         public Task Publish(string topic, string message, QualityOfService qos, Action<MqttCommand> completed)
         {
-            var pub = new Publish(topic, message);
-            pub.Header.QualityOfService = qos;
+            var pub = new Publish(topic, message)
+                {
+                    Header = {QualityOfService = qos}
+                };
+
             if (qos != QualityOfService.AtMostOnce)
             {
                 pub.MessageId = _idSeq.Next();
             }
 
             var publish = new PublishSendFlow(_manager);
+
             return publish.Start(pub, completed);
         }
 
@@ -89,12 +89,12 @@ namespace MQTT.Client
 
         public void Unsubscribe(string[] topics)
         {
-            _broker.Send(new Unsubscribe(topics)).Await();
+            _client.Send(new Unsubscribe(topics)).Await();
         }
 
         public event UnsolicitedMessageCallback OnUnsolicitedMessage;
 
-        private void _broker_OnMessageReceived(object sender, ClientCommandEventArgs e)
+        private void ClientOnMessageReceived(object sender, ClientCommandEventArgs e)
         {
             MqttCommand command = e.Command;
 
@@ -127,7 +127,7 @@ namespace MQTT.Client
 
         private void Notify(MqttCommand command)
         {
-            UnsolicitedMessageCallback callback = OnUnsolicitedMessage;
+            var callback = OnUnsolicitedMessage;
             if (callback != null)
             {
                 callback(this, new ClientCommandEventArgs(command));
@@ -136,9 +136,7 @@ namespace MQTT.Client
 
         private void ResetTimer()
         {
-            using (_timer)
-            {
-            }
+            using (_timer) { }
             _timer = new Timer(300*1000*0.80);
             _timer.Elapsed += _timer_Elapsed;
             _timer.Start();
@@ -150,7 +148,7 @@ namespace MQTT.Client
             {
                 if (IsConnected && _lastHeard < DateTime.UtcNow.AddMinutes(4))
                 {
-                    _broker.Send(new PingReq()).Await();
+                    _client.Send(new PingReq()).Await();
                 }
             }
         }

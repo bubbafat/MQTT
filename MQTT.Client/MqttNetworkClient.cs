@@ -1,32 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net.Sockets;
-
 using System.Threading.Tasks;
-using System.Threading;
 using MQTT.Commands;
-using MQTT.Types;
+using MQTT.Domain;
 
-namespace MQTT.Domain
+namespace MQTT.Client
 {
-    public sealed class MqttNetworkBroker : IMqttBroker
+    public sealed class MqttNetworkClient : IMqttClient
     {
-        INetworkInterface _network;
+        readonly INetworkInterface _network;
 
-        public MqttNetworkBroker(INetworkInterface network)
+        public MqttNetworkClient(INetworkInterface network)
         {
             _network = network;
         }
 
         public void Connect(System.Net.IPEndPoint endpoint)
         {
-            TcpClient client = new TcpClient();
+            var client = new TcpClient();
             client.Connect(endpoint);
-            _network.Start(client, (MqttCommand cmd) =>
+            _network.Start(client, cmd =>
                 {
-                    MessageReceivedCallback recv = OnMessageReceived;
+                    var recv = OnMessageReceived;
                     if (recv != null)
                     {
                         recv(this, new ClientCommandEventArgs(cmd));
@@ -62,34 +57,6 @@ namespace MQTT.Domain
         public void Start(TcpClient client, Action<MqttCommand> onIncomingMessage)
         {
             _network.Start(client, onIncomingMessage);
-        }
-    }
-
-    public class BlockingQueue<T>
-    {
-        private readonly Queue<T> m_Queue = new Queue<T>();
-        private readonly object _lock = new object();
-
-        public void Enqueue(T item)
-        {
-            lock (_lock)
-            {
-                m_Queue.Enqueue(item);
-                Monitor.Pulse(_lock);
-            }
-        }
-
-        public T Dequeue()
-        {
-            lock (_lock)
-            {
-                while (m_Queue.Count == 0)
-                {
-                    Monitor.Wait(_lock);
-                }
-
-                return m_Queue.Dequeue();
-            }
         }
     }
 }

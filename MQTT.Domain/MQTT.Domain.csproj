@@ -46,9 +46,7 @@
     <Compile Include="DesireCache.cs" />
     <Compile Include="ICommandReader.cs" />
     <Compile Include="ICommandWriter.cs" />
-    <Compile Include="IMqttBroker.cs" />
     <Compile Include="INetworkInterface.cs" />
-    <Compile Include="MqttNetworkBroker.cs" />
     <Compile Include="NetworkInterface.cs" />
     <Compile Include="NewConnectionEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

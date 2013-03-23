@@ -11,7 +11,7 @@ using MQTT.Domain;
 
 namespace MQTT.Client.Tests
 {
-    class MockMqttBroker : IMqttBroker
+    class MockMqttClient : IMqttClient
     {
         bool _connected = false;
         ConcurrentQueue<MqttCommand> _incoming = new ConcurrentQueue<MqttCommand>();

@@ -17,7 +17,7 @@ namespace MQTT.Client.Tests
         [TestMethod]
         public void Connect()
         {
-            Client c = new Client(new MockMqttBroker());
+            Client c = new Client(new MockMqttClient());
             c.ClientId = "clientId";
 
             Assert.IsFalse(c.IsConnected);

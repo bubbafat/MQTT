@@ -46,7 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ClientTests.cs" />
-    <Compile Include="MockMqttBroker.cs" />
+    <Compile Include="MockMqttClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -20,7 +20,7 @@ namespace MQTT.Client.Console
         {
             Bind<ICommandReader>().To<CommandReader>();
             Bind<ICommandWriter>().To<CommandWriter>();
-            Bind<IMqttBroker>().To<MqttNetworkBroker>();
+            Bind<IMqttClient>().To<MqttNetworkClient>();
             Bind<INetworkInterface>().To<NetworkInterface>();
         }
     }
