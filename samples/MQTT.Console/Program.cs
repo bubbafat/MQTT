@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using MQTT.Client;
 using MQTT.Client.Console;
 using MQTT.Commands;
 using MQTT.Domain;
@@ -68,10 +69,8 @@ namespace MQTT.ConsoleApp
 
         private static void DoWriteAction()
         {
-            using (var c = Factory.Get<Client.Client>())
+            using (var c = new MqttClient(string.Format("{0}_WRITER_{1}", topic, Thread.CurrentThread.ManagedThreadId)))
             {
-                c.ClientId = string.Format("{0}_WRITER_{1}", topic, Thread.CurrentThread.ManagedThreadId);
-
                 c.OnUnsolicitedMessage += c_OnUnsolicitedMessage;
 
                 IPAddress address =
@@ -120,10 +119,8 @@ namespace MQTT.ConsoleApp
         {
             string lname = string.Format("listener {0}", name);
 
-            using (var c = Factory.Get<Client.Client>())
+            using (var c = new MqttClient(lname))
             {
-                c.ClientId = lname;
-
                 c.OnUnsolicitedMessage += (c_OnUnsolicitedMessage);
 
                 IPAddress address =

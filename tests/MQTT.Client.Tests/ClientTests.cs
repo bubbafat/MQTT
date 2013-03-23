@@ -10,7 +10,7 @@ namespace MQTT.Client.Tests
         [TestMethod]
         public void Connect()
         {
-            var c = new Client(new MockMqttClient()) {ClientId = "clientId"};
+            var c = new MqttClient("clientId", new MockMqttClient());
 
             Assert.IsFalse(c.IsConnected);
             c.Connect(new IPEndPoint(IPAddress.Loopback, 1883)).Wait();

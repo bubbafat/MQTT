@@ -1,15 +1,16 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MQTT.Client")]
+[assembly: AssemblyTitle("TestMqEcho")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Itron")]
-[assembly: AssemblyProduct("MQTT.Client")]
-[assembly: AssemblyCopyright("Copyright © Itron 2012")]
+[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyProduct("TestMqEcho")]
+[assembly: AssemblyCopyright("Copyright © Microsoft 2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -19,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a7581e1e-1adc-46dd-a6be-9bd5e650bf13")]
+[assembly: Guid("73c01f8a-fdd9-49bd-ba73-91bdd8b3aedb")]
 
 // Version information for an assembly consists of the following four values:
 //

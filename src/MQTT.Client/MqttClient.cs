@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Timers;
 using MQTT.Commands;
@@ -12,7 +14,7 @@ namespace MQTT.Client
 {
     public delegate void UnsolicitedMessageCallback(object sender, ClientCommandEventArgs e);
 
-    public sealed class Client : IDisposable
+    public sealed class MqttClient : IDisposable
     {
         private readonly IMqttClient _client;
         private readonly MessageIdSequence _idSeq = new MessageIdSequence();
@@ -23,14 +25,21 @@ namespace MQTT.Client
         private DateTime _lastHeard = DateTime.MinValue;
         private Timer _timer;
 
-        public Client(IMqttClient client)
+        public MqttClient(string clientId)
+            : this(clientId, new MqttNetworkClient(new NetworkInterface(new CommandReader(), new CommandWriter())))
         {
+            
+        }
+
+        public MqttClient(string clientId, IMqttClient client)
+        {
+            ClientId = clientId;
             _client = client;
             _client.OnMessageReceived += ClientOnMessageReceived;
             _manager = new StateMachineManager(_client);
         }
 
-        public string ClientId { get; set; }
+        public string ClientId { get; private set; }
 
         public bool IsConnected
         {
@@ -41,6 +50,15 @@ namespace MQTT.Client
         {
             using (_timer) { }
             using (_client) { }
+        }
+
+        public Task Connect(string server, int port)
+        {
+            IPAddress address =
+                Dns.GetHostAddresses(server)
+                   .First(a => a.AddressFamily == AddressFamily.InterNetwork);
+
+            return Connect(new IPEndPoint(address, port));
         }
 
         public Task Connect(IPEndPoint endpoint)
@@ -78,6 +96,18 @@ namespace MQTT.Client
             var publish = new PublishSendFlow(_manager);
 
             return publish.Start(pub, completed);
+        }
+
+        public Task Subscribe(string topic)
+        {
+            return Subscribe(topic, null);
+        }
+
+        public Task Subscribe(string topic, Action<MqttCommand> completed)
+        {
+            return Subscribe(
+                new[] { new Subscription(topic, QualityOfService.ExactlyOnce)}, 
+                completed);
         }
 
         public Task Subscribe(Subscription[] subs, Action<MqttCommand> completed)
