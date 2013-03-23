@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 using System.Threading.Tasks;
-using System.Net.Sockets;
 
 namespace MQTT.Types
 {
@@ -17,15 +13,13 @@ namespace MQTT.Types
             {
                 return (byte)read;
             }
-            else
-            {
-                throw new InvalidOperationException("Unable to read the required length from the string");
-            }
+
+            throw new InvalidOperationException("Unable to read the required length from the string");
         }
 
         public static byte[] ReadBytesOrFail(this Stream stream, int length)
         {
-            byte[] result = new byte[length];
+            var result = new byte[length];
             int remaining = length;
             int readStart = 0;
             while (remaining > 0)
@@ -47,14 +41,14 @@ namespace MQTT.Types
 
         public static Task<byte[]> ReadBytesOrFailAsync(this Stream stream, int length)
         {
-            return Task.Factory.StartNew<byte[]>(() =>
+            return Task.Factory.StartNew(() =>
                 {
-                    byte[] result = new byte[length];
+                    var result = new byte[length];
                     int remaining = length;
                     int readStart = 0;
                     while (remaining > 0)
                     {
-                        int actuallyRead = stream.ReadAsync(result, readStart, remaining).Await<int>().Result;
+                        int actuallyRead = stream.ReadAsync(result, readStart, remaining).Await().Result;
                         if (actuallyRead > 0)
                         {
                             remaining -= actuallyRead;

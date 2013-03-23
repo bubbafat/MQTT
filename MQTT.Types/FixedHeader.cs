@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
-using System.Threading.Tasks;
-using System.Net.Sockets;
+﻿using System.Collections.Generic;
 
 namespace MQTT.Types
 {
@@ -40,7 +34,7 @@ namespace MQTT.Types
                 firstByte++;
             }
 
-            List<byte> bytes = new List<byte>();
+            var bytes = new List<byte>();
             bytes.Add((byte)firstByte);
             bytes.AddRange(VariableLengthInteger.ToByteArray(RemainingLength));
 
@@ -57,16 +51,17 @@ namespace MQTT.Types
             }
             else
             {
-                firstByte = connection.Stream.ReadBytesOrFailAsync(1).Await<byte[]>().Result[0];
+                firstByte = connection.Stream.ReadBytesOrFailAsync(1).Await().Result[0];
             }
 
-            FixedHeader header = new FixedHeader();
-            header.Message = (CommandMessage)((firstByte & 0xF0) >> 4);
-            header.Duplicate = (firstByte & 0x8) == 0x8;
-            header.QualityOfService = (QualityOfService)((firstByte & 0x6) >> 1);
-            header.Retain = (firstByte & 0x1) == 0x1;
-
-            header.RemainingLength = VariableLengthInteger.Load(connection);
+            var header = new FixedHeader
+                {
+                    Message = (CommandMessage) ((firstByte & 0xF0) >> 4),
+                    Duplicate = (firstByte & 0x8) == 0x8,
+                    QualityOfService = (QualityOfService) ((firstByte & 0x6) >> 1),
+                    Retain = (firstByte & 0x1) == 0x1,
+                    RemainingLength = VariableLengthInteger.Load(connection)
+                };
 
             return header;
         }

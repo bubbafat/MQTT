@@ -33,7 +33,7 @@ namespace MQTT.Commands
                 var bytes = new List<byte>();
                 foreach (string topic in _topics)
                 {
-                    bytes.AddRange(MQString.ToByteArray(topic));
+                    bytes.AddRange(MqString.ToByteArray(topic));
                 }
 
                 return bytes.ToArray();
@@ -53,7 +53,7 @@ namespace MQTT.Commands
 
                         while (stream.Position < stream.Length)
                         {
-                            _topics.Add(MQString.FromStream(stream));
+                            _topics.Add(MqString.FromStream(stream));
                         }
                     }
                 }

@@ -40,21 +40,21 @@ namespace MQTT.Commands
             get
             {
                 var bytes = new List<byte>();
-                bytes.AddRange(MQString.ToByteArray(ClientIdentifier));
+                bytes.AddRange(MqString.ToByteArray(ClientIdentifier));
 
                 if (Details.ConnectFlags.Will)
                 {
-                    bytes.AddRange(MQString.ToByteArray(WillTopic));
-                    bytes.AddRange(MQString.ToByteArray(WillMessage));
+                    bytes.AddRange(MqString.ToByteArray(WillTopic));
+                    bytes.AddRange(MqString.ToByteArray(WillMessage));
                 }
 
                 if (Details.ConnectFlags.UserName)
                 {
-                    bytes.AddRange(MQString.ToByteArray(UserName));
+                    bytes.AddRange(MqString.ToByteArray(UserName));
                 }
                 if (Details.ConnectFlags.Password)
                 {
-                    bytes.AddRange(MQString.ToByteArray(Password));
+                    bytes.AddRange(MqString.ToByteArray(Password));
                 }
 
                 return bytes.ToArray();
@@ -75,21 +75,21 @@ namespace MQTT.Commands
 
         private void LoadPayload(Stream data)
         {
-            ClientIdentifier = MQString.FromStream(data);
+            ClientIdentifier = MqString.FromStream(data);
             if (Details.ConnectFlags.Will)
             {
-                WillTopic = MQString.FromStream(data);
-                WillMessage = MQString.FromStream(data);
+                WillTopic = MqString.FromStream(data);
+                WillMessage = MqString.FromStream(data);
             }
 
             if (Details.ConnectFlags.UserName)
             {
-                UserName = MQString.FromStream(data);
+                UserName = MqString.FromStream(data);
             }
 
             if (Details.ConnectFlags.Password)
             {
-                Password = MQString.FromStream(data);
+                Password = MqString.FromStream(data);
             }
         }
     }
@@ -156,7 +156,7 @@ namespace MQTT.Commands
         public byte[] ToByteArray()
         {
             var bytes = new List<byte>();
-            bytes.AddRange(MQString.ToByteArray(ProtocolName));
+            bytes.AddRange(MqString.ToByteArray(ProtocolName));
             bytes.Add(Protocolversion);
             bytes.AddRange(ConnectFlags.ToByteArray());
 
@@ -173,7 +173,7 @@ namespace MQTT.Commands
         {
             var header = new V3ConnectVariableHeader
                 {
-                    ProtocolName = MQString.FromStream(stream),
+                    ProtocolName = MqString.FromStream(stream),
                     Protocolversion = stream.ReadByteOrFail(),
                     ConnectFlags = ConnectFlags.FromStream(stream),
                     KeepAliveTimer = stream.ReadUint16()

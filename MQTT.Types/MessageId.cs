@@ -1,30 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Globalization;
 using System.IO;
 
 namespace MQTT.Types
 {
-    public class MessageId : IComparable<MessageId>
+    public struct MessageId : IComparable<MessageId>
     {
         public MessageId(ushort value)
         {
             Value = value;
         }
 
-        public ushort Value
-        {
-            get;
-            private set;
-        }
+        public readonly ushort Value;
 
         public byte[] ToByteArray()
         {
-            byte lsb = (byte)(Value & 0x00FF);
-            byte msb = (byte)((Value& 0xFF00) >> 8);
+            var lsb = (byte)(Value & 0x00FF);
+            var msb = (byte)((Value & 0xFF00) >> 8);
 
-            return new byte[] { msb, lsb };
+            return new [] { msb, lsb };
         }
 
         public static MessageId FromStream(Stream stream)
@@ -42,14 +36,14 @@ namespace MQTT.Types
             return id1.Equals(id2);
         }
 
-        public static bool operator !=(MessageId id1, MessageId id2)
+        public static bool operator != (MessageId id1, MessageId id2)
         {
             return !id1.Equals(id2);
         }
 
         public override string ToString()
         {
-            return Value.ToString();
+            return Value.ToString(CultureInfo.InvariantCulture);
         }
 
         public override int GetHashCode()
@@ -59,18 +53,13 @@ namespace MQTT.Types
 
         public override bool Equals(object obj)
         {
-            if (obj == null)
+            if (obj is MessageId)
             {
-                return false;
+                var id = (MessageId) obj;
+                return id.Value == Value;
             }
 
-            MessageId id = obj as MessageId;
-            if (id == null)
-            {
-                return false;
-            }
-
-            return id.Value == Value;
+            return false;
         }
 
         public static readonly MessageId Any = new MessageId(0);

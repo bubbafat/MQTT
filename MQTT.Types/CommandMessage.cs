@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace MQTT.Types
+﻿namespace MQTT.Types
 {
     public enum CommandMessage
     {
+        // ReSharper disable InconsistentNaming
         UNKNOWN = 0,    // Nothing has been set
         CONNECT = 1,    // Client request to connect to Server
         CONNACK = 2,    // Connect Acknowledgment
@@ -22,5 +18,6 @@ namespace MQTT.Types
         PINGREQ = 12,   // PING Request
         PINGRESP = 13,   // PING Response
         DISCONNECT = 14,   // Client is Disconnecting
+        // ReSharper restore InconsistentNaming
     }
 }

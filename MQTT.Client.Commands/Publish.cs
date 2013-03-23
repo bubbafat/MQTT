@@ -29,7 +29,7 @@ namespace MQTT.Commands
         }
 
         public Publish(string topic, string message)
-            : this(topic, MQString.ToByteArray(message))
+            : this(topic, MqString.ToByteArray(message))
         {
         }
 
@@ -37,7 +37,7 @@ namespace MQTT.Commands
         {
             get
             {
-                var bytes = new List<byte>(MQString.ToByteArray(Topic));
+                var bytes = new List<byte>(MqString.ToByteArray(Topic));
                 if (Header.QualityOfService == QualityOfService.AtLeastOnce ||
                     Header.QualityOfService == QualityOfService.ExactlyOnce)
                 {
@@ -66,7 +66,7 @@ namespace MQTT.Commands
             {
                 using(var stream = new MemoryStream(data))
                 {
-                    Topic = MQString.FromStream(stream);
+                    Topic = MqString.FromStream(stream);
 
                     if (Header.QualityOfService == QualityOfService.AtLeastOnce ||
                         Header.QualityOfService == QualityOfService.ExactlyOnce)

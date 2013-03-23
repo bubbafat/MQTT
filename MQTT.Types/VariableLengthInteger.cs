@@ -1,41 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
-using System.Net.Sockets;
 
 namespace MQTT.Types
 {
     public static class VariableLengthInteger
     {
-        public static byte[] ToByteArray(int X)
+        public static byte[] ToByteArray(int value)
         {
-            if (X < 0 || X > 268435455)
+            if (value < 0 || value > 268435455)
             {
                 throw new ArgumentOutOfRangeException("value");
             }
 
             int length = 1;
-            if (X > 127) length++;
-            if (X > 16383) length++;
-            if (X > 2097151) length++;
+            if (value > 127) length++;
+            if (value > 16383) length++;
+            if (value > 2097151) length++;
 
-            byte[] targetArray = new byte[length];
+            var targetArray = new byte[length];
 
             int index = 0;
             do
             {
                 int digit;
-                X = Math.DivRem(X, 128, out digit);
-                if (X > 0)
+                value = Math.DivRem(value, 128, out digit);
+                if (value > 0)
                 {
                     digit = digit | 0x80;
                 }
 
                 targetArray[index++] = (byte)digit;
             }
-            while (X > 0);
+            while (value > 0);
 
             return targetArray;
         }
@@ -44,8 +39,8 @@ namespace MQTT.Types
         {
             int result = 0;
             int multiplier = 1;
-            int digit = 0;
             int bytesRead = 0;
+            int digit;
 
             do
             {
@@ -55,7 +50,7 @@ namespace MQTT.Types
                 }
                 else
                 {
-                    digit = connection.Stream.ReadBytesOrFailAsync(1).Await<byte[]>().Result[0];
+                    digit = connection.Stream.ReadBytesOrFailAsync(1).Await().Result[0];
                 }
                 result += (digit & 127) * multiplier;
                 multiplier *= 128;

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MQTT.Types
@@ -14,7 +11,11 @@ namespace MQTT.Types
             switch (task.Status)
             {
                 case TaskStatus.Faulted:
-                    throw task.Exception;
+                    if (task.Exception != null)
+                    {
+                        throw task.Exception;
+                    }
+                    throw new InvalidOperationException("The Task has faulted but no exception was found.");
                 case TaskStatus.Canceled:
                     throw new OperationCanceledException();
                 case TaskStatus.RanToCompletion:
@@ -30,7 +31,11 @@ namespace MQTT.Types
             switch (task.Status)
             {
                 case TaskStatus.Faulted:
-                    throw task.Exception;
+                    if (task.Exception != null)
+                    {
+                        throw task.Exception;
+                    }                        
+                    throw new InvalidOperationException("The Task has faulted but no exception was found.");
                 case TaskStatus.Canceled:
                     throw new OperationCanceledException();
                 case TaskStatus.RanToCompletion:

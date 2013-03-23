@@ -19,7 +19,7 @@ namespace MQTT.Commands
         {
             var bytes = new List<byte>();
 
-            bytes.AddRange(MQString.ToByteArray(Topic));
+            bytes.AddRange(MqString.ToByteArray(Topic));
             bytes.Add((byte)QoS);
 
             return bytes.ToArray();
@@ -92,7 +92,7 @@ namespace MQTT.Commands
 
                         while (stream.Position < stream.Length)
                         {
-                            Subscriptions.Add(new Subscription(MQString.FromStream(stream), (QualityOfService)stream.ReadByteOrFail()));
+                            Subscriptions.Add(new Subscription(MqString.FromStream(stream), (QualityOfService)stream.ReadByteOrFail()));
                         }
                     }
                 }
