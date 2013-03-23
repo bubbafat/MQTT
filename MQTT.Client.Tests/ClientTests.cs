@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MQTT.Types;
 using System.Net;
-using MQTT.Commands;
-using System.Threading.Tasks;
-using MQTT.Domain;
 
 namespace MQTT.Client.Tests
 {
@@ -17,8 +10,7 @@ namespace MQTT.Client.Tests
         [TestMethod]
         public void Connect()
         {
-            Client c = new Client(new MockMqttClient());
-            c.ClientId = "clientId";
+            var c = new Client(new MockMqttClient()) {ClientId = "clientId"};
 
             Assert.IsFalse(c.IsConnected);
             c.Connect(new IPEndPoint(IPAddress.Loopback, 1883)).Wait();

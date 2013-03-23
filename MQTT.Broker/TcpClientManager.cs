@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MQTT.Broker.Network;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
@@ -15,7 +11,7 @@ namespace MQTT.Broker.Network
         TcpListener _listener;
         Thread _listeningThread;
         ManualResetEvent _stopThread;
-        INewConnectionManager _newConnectionManager;
+        readonly INewConnectionManager _newConnectionManager;
 
         readonly object _lock = new object();
 
@@ -32,7 +28,7 @@ namespace MQTT.Broker.Network
 
                 _newConnectionManager.Start();
 
-                IPEndPoint endpoint = new IPEndPoint(IPAddress.IPv6Any, 1883);
+                var endpoint = new IPEndPoint(IPAddress.IPv6Any, 1883);
                 _listener = new TcpListener(endpoint);
                 // accept both ipv4 and ipv6 connections
                 _listener.Server.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
@@ -77,6 +73,7 @@ namespace MQTT.Broker.Network
         public void Dispose()
         {
             Stop();
+            using (_stopThread) { }
         }
 
         private void ListeningLoop(object stopEventArg)
@@ -86,9 +83,9 @@ namespace MQTT.Broker.Network
                 throw new ArgumentNullException("stopEventArg");
             }
 
-            ManualResetEvent stopEvent = (ManualResetEvent)stopEventArg;
+            var stopEvent = (ManualResetEvent)stopEventArg;
 
-            Task cancel = Task.Factory.StartNew(() =>
+            var cancel = Task.Factory.StartNew(() =>
             {
                 stopEvent.WaitOne();
             }, TaskCreationOptions.LongRunning);
@@ -127,11 +124,15 @@ namespace MQTT.Broker.Network
             switch (conn.Status)
             {
                 case TaskStatus.Faulted:
-                    throw conn.Exception;
+                    if (conn.Exception != null)
+                    {
+                        throw conn.Exception;
+                    }
+                    throw new InvalidOperationException("New connection faulted but there was no exception provided.");
                 case TaskStatus.Canceled:
                     return;
                 case TaskStatus.RanToCompletion:
-                    TcpClient client = conn.Result;
+                    var client = conn.Result;
                     if (client.Connected)
                     {
                         _newConnectionManager.Process(client);

@@ -5,8 +5,6 @@ using System.Text;
 using MQTT.Broker;
 using System.Net;
 using System.Threading;
-using MQTT.Types;
-using MQTT.Domain;
 
 namespace mqtt_broker
 {
@@ -14,9 +12,9 @@ namespace mqtt_broker
     {
         static void Main(string[] args)        
         {
-            using (MqttBroker broker = BrokerFactory.Get<MqttBroker>())
+            using (var broker = BrokerFactory.Get<MqttBroker>())
             {
-                IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, 1883);
+                var endpoint = new IPEndPoint(IPAddress.Any, 1883);
                 broker.Listen(endpoint);
 
                 Console.Write("Listening");

@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net.Sockets;
-using MQTT.Commands;
 using MQTT.Types;
-using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using MQTT.Domain.StateMachines;
 using MQTT.Broker.StateMachines;
 
 namespace MQTT.Broker.Network
 {
-    class NewConnectionManager : INewConnectionManager
+    sealed class NewConnectionManager : INewConnectionManager, IDisposable
     {
-        BlockingQueue<NetworkConnection> _incomingConnections = new BlockingQueue<NetworkConnection>();
-        IActiveConnectionManager _activeConnectionManager;
+        readonly BlockingQueue<NetworkConnection> _incomingConnections = new BlockingQueue<NetworkConnection>();
+        readonly IActiveConnectionManager _activeConnectionManager;
         Thread _processingThread;
         ManualResetEvent _stopThread;
         readonly object _lock = new object();
@@ -65,25 +60,20 @@ namespace MQTT.Broker.Network
                 throw new ArgumentNullException("stopThreadArg");
             }
 
-            ManualResetEvent stopThread = (ManualResetEvent)stopThreadArg;
+            var stopThread = (ManualResetEvent)stopThreadArg;
 
-            Task stop = Task.Factory.StartNew(() =>
+            var stop = Task.Factory.StartNew(() =>
                 {
                     stopThread.WaitOne();
                 }, TaskCreationOptions.LongRunning);
 
-            List<Task<NamedConnection>> pendingConnects = new List<Task<NamedConnection>>();
+            var pendingConnects = new List<Task<NamedConnection>>();
 
             while (true)
             {
-                Task<NetworkConnection> conn = Task.Factory.StartNew<NetworkConnection>(() =>
-                    {
-                        return _incomingConnections.Dequeue();
-                    }, TaskCreationOptions.LongRunning);
+                Task<NetworkConnection> conn = Task.Factory.StartNew(() => _incomingConnections.Dequeue(), TaskCreationOptions.LongRunning);
 
-                List<Task> allTasks = new List<Task>();
-                allTasks.Add(conn);
-                allTasks.Add(stop);
+                var allTasks = new List<Task> {conn, stop};
                 allTasks.AddRange(pendingConnects);
 
                 int index = Task.WaitAny(allTasks.ToArray());
@@ -95,7 +85,7 @@ namespace MQTT.Broker.Network
                     case 1:
                         return;
                     default:
-                        Task<NamedConnection> result = (Task<NamedConnection>)allTasks[index];
+                        var result = (Task<NamedConnection>)allTasks[index];
                         pendingConnects.Remove(result);
                         ConnectFinished(result);
                         break;
@@ -128,17 +118,27 @@ namespace MQTT.Broker.Network
             switch (conn.Status)
             {
                 case TaskStatus.Faulted:
-                    throw conn.Exception;
+                    if (conn.Exception != null)
+                    {
+                        throw conn.Exception;
+                    }
+                    throw new InvalidOperationException("New connection faulted but there was no exception provided.");
                 case TaskStatus.RanToCompletion:
-                    NetworkConnection connection = conn.Result;
-                    return Task.Factory.StartNew<NamedConnection>(() =>
+                    var connection = conn.Result;
+                    return Task.Factory.StartNew(() =>
                         {
-                            ConnectReceive connRecv = BrokerFactory.Get<ConnectReceive>();
+                            var connRecv = BrokerFactory.Get<ConnectReceive>();
                             return connRecv.Run(connection);
                         });
                 default:
                     throw new NotImplementedException("say what?");                    
             }
+        }
+
+        public void Dispose()
+        {
+            Stop();
+            using(_stopThread) { }
         }
     }
 }

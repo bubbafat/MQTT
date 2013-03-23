@@ -1,31 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using MQTT.Commands;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using MQTT.Types;
 using MQTT.Domain;
 
 namespace MQTT.Broker.Network
 {
-    class ActiveConnectionManager : IActiveConnectionManager
+    class ActiveConnectionManager : IActiveConnectionManager, IDisposable
     {
-        ConcurrentDictionary<string, NamedConnection> _allConnections = new ConcurrentDictionary<string, NamedConnection>();
-        List<NamedConnection> _newConnections = new List<NamedConnection>();
-        List<Task<CommandRead>> _runningCommands = new List<Task<CommandRead>>();
+        readonly ConcurrentDictionary<string, NamedConnection> _allConnections = new ConcurrentDictionary<string, NamedConnection>();
+        readonly List<NamedConnection> _newConnections = new List<NamedConnection>();
+        readonly List<Task<CommandRead>> _runningCommands = new List<Task<CommandRead>>();
 
         Thread _processingThread;
         ManualResetEvent _stopThread;
         readonly object _lock = new object();
-        ManualResetEvent _itemAdded = new ManualResetEvent(false);
-
-        public ActiveConnectionManager()
-        {
-
-        }
+        readonly ManualResetEvent _itemAdded = new ManualResetEvent(false);
 
         public void Start()
         {
@@ -57,23 +50,21 @@ namespace MQTT.Broker.Network
                 throw new ArgumentNullException("stopThreadArg");
             }
 
-            ManualResetEvent stopThread = (ManualResetEvent)stopThreadArg;
+            var stopThread = (ManualResetEvent)stopThreadArg;
 
             while (true)
             {
-                Task stop = Task.Factory.StartNew(() =>
+                var stop = Task.Factory.StartNew(() =>
                 {
                     stopThread.WaitOne();
                 }, TaskCreationOptions.LongRunning);
 
-                Task added = Task.Factory.StartNew(() =>
+                var added = Task.Factory.StartNew(() =>
                 {
                     _itemAdded.WaitOne();
                 }, TaskCreationOptions.LongRunning);
 
-                List<Task> toListen = new List<Task>();
-                toListen.Add(stop);
-                toListen.Add(added);
+                var toListen = new List<Task> {stop, added};
 
                 lock (_lock)
                 {
@@ -108,7 +99,7 @@ namespace MQTT.Broker.Network
                         LoadNewItems();
                         break;
                     default:
-                        Task<CommandRead> cmdRead = (Task<CommandRead>)_runningCommands[index-2];
+                        var cmdRead = _runningCommands[index-2];
                         ProcessItem(cmdRead);
                         _runningCommands.Remove(cmdRead);
                         break;
@@ -149,9 +140,9 @@ namespace MQTT.Broker.Network
         {
             lock (_lock)
             {
-                _runningCommands.Add(Task.Factory.StartNew<CommandRead>(() =>
+                _runningCommands.Add(Task.Factory.StartNew(() =>
                         {
-                            ICommandReader reader = BrokerFactory.Get<ICommandReader>();
+                            var reader = BrokerFactory.Get<ICommandReader>();
                             MqttCommand cmd = reader.Read(connection.Connection);
                             return new CommandRead(cmd, connection);
                         }, TaskCreationOptions.LongRunning));
@@ -168,7 +159,7 @@ namespace MQTT.Broker.Network
                 Disconnect(connection);
 
                 // maybe still in new connections queue
-                NamedConnection existing = _newConnections.Where(c => c.ClientId == connection.ClientId).FirstOrDefault();
+                NamedConnection existing = _newConnections.FirstOrDefault(c => c.ClientId == connection.ClientId);
                 if (existing != null)
                 {
                     Disconnect(existing);
@@ -210,6 +201,13 @@ namespace MQTT.Broker.Network
             {
                 old.Connection.Disconnect();
             }
+        }
+
+        public void Dispose()
+        {
+            Stop();
+            using(_stopThread) {}
+            using(_itemAdded) {}
         }
     }
 }

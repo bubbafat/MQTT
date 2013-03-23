@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Commands;
 using MQTT.Types;
 using System.Threading.Tasks;
-using System.Threading;
 
 namespace MQTT.Domain.StateMachines
 {
@@ -20,14 +16,14 @@ namespace MQTT.Domain.StateMachines
         {
             if (onSuccess == null)
             {
-                onSuccess = (MqttCommand c) => { };
+                onSuccess = c => { };
             }
 
             return Send(command)
-                .ContinueWith((task) =>
+                .ContinueWith(task =>
                     WaitFor(CommandMessage.CONNACK, MessageId.Any, TimeSpan.FromSeconds(30)), 
                     TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
-                .ContinueWith((task) =>
+                .ContinueWith(task =>
                     onSuccess(command),
                     TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
         }

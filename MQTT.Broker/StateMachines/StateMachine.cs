@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Commands;
 using MQTT.Broker.Network;
 using System.Threading;
@@ -16,9 +13,9 @@ namespace MQTT.Broker.StateMachines
 
         protected Task WaitFor(NamedConnection connection, ushort messageId, CommandMessage mustBeType)
         {
-            ManualResetEvent available = new ManualResetEvent(false);
+            var available = new ManualResetEvent(false);
 
-            Action<MqttCommand> ready = (cmd) =>
+            Action<MqttCommand> ready = cmd =>
                 {
                     if (cmd.CommandMessage != mustBeType)
                     {

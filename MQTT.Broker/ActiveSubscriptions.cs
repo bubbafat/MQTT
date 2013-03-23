@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using MQTT.Domain;
 
 namespace MQTT.Broker
 {
     public sealed class ActiveSubscriptions
     {
-        private static ActiveSubscriptions _current = new ActiveSubscriptions();
+        private static readonly ActiveSubscriptions _current = new ActiveSubscriptions();
         
         readonly List<ActiveSubscription> _activeSubscriptions = new List<ActiveSubscription>();
         readonly object _subLock = new object();
@@ -34,11 +31,11 @@ namespace MQTT.Broker
 
         internal IList<string> Publish(string clientId, string topic, byte[] message)
         {
-            HashSet<string> deliveryClients = new HashSet<string>();
+            var deliveryClients = new HashSet<string>();
 
             lock (_subLock)
             {
-                foreach (ActiveSubscription sub in _activeSubscriptions.Where(s => s.ClientId != clientId))
+                foreach (var sub in _activeSubscriptions.Where(s => s.ClientId != clientId))
                 {
                     if (!deliveryClients.Contains(sub.ClientId))
                     {

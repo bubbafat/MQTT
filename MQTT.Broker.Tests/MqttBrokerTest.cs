@@ -1,18 +1,10 @@
-﻿using MQTT.Broker;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Net;
-using MQTT.Types;
-using MQTT.Domain;
-using System.Collections.Generic;
-using System.Threading;
-using MQTT.Commands;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace MQTT.Broker.Tests
 {
 
 
-    [TestClass()]
+    [TestClass]
     public class MqttBrokerTest
     {
 
@@ -62,7 +54,7 @@ namespace MQTT.Broker.Tests
         #endregion
 
 
-        [TestMethod()]
+        [TestMethod]
         public void PingPongTest()
         {
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using MQTT.Types;
 using MQTT.Commands;
 using System.Threading.Tasks;
@@ -11,12 +10,12 @@ namespace MQTT.Domain.StateMachines
 {
     public class StateMachineManager
     {
-        INetworkInterface _broker;
+        readonly INetworkInterface _broker;
 
         readonly object _desireLock = new object();
 
-        List<MqttCommand> _unlovedCommands = new List<MqttCommand>();
-        DesireCache _desireCache = new DesireCache();
+        readonly List<MqttCommand> _unlovedCommands = new List<MqttCommand>();
+        readonly DesireCache _desireCache = new DesireCache();
 
         public StateMachineManager(INetworkInterface broker)
         {
@@ -45,13 +44,13 @@ namespace MQTT.Domain.StateMachines
             switch (command.CommandMessage)
             {
                 case CommandMessage.CONNECT:
-                    ConnectReceiveFlow connFlow = new ConnectReceiveFlow(this);
+                    var connFlow = new ConnectReceiveFlow(this);
                     return connFlow.Start(command, onSuccess);
                 case CommandMessage.PUBLISH:
-                    PublishReceiveFlow pubFlow = new PublishReceiveFlow(this);
+                    var pubFlow = new PublishReceiveFlow(this);
                     return pubFlow.Start(command, onSuccess);
                 case CommandMessage.SUBSCRIBE:
-                    SubscribeFlow subFlow = new SubscribeFlow(this);
+                    var subFlow = new SubscribeFlow(this);
                     return subFlow.Start(command, onSuccess);
 
                 default:
@@ -65,7 +64,8 @@ namespace MQTT.Domain.StateMachines
         {
             lock (_desireLock)
             {
-                MqttCommand maybeLoved = _unlovedCommands.Where(c => c.MessageId == messageId && c.CommandMessage == message).FirstOrDefault();
+                var maybeLoved =
+                    _unlovedCommands.FirstOrDefault(c => c.MessageId == messageId && c.CommandMessage == message);
 
                 if (maybeLoved != null)
                 {
@@ -73,25 +73,23 @@ namespace MQTT.Domain.StateMachines
                     tcs.SetResult(maybeLoved);
                     return tcs.Task;
                 }
-                else
-                {
-                    MqttCommand result = null;
-                    ManualResetEvent wait = new ManualResetEvent(false);
 
-                    Desire d = new Desire(message, messageId, (MqttCommand cmd) =>
+                MqttCommand result = null;
+                var wait = new ManualResetEvent(false);
+
+                var d = new Desire(message, messageId, cmd =>
                     {
                         result = cmd;
                         wait.Set();
                     });
 
-                    _desireCache.AddAndRemoveDuplicates(d);
+                _desireCache.AddAndRemoveDuplicates(d);
 
-                    return Task<MqttCommand>.Factory.StartNew(() =>
-                        {
-                            wait.WaitOne(timeout);
-                            return result;
-                        });
-                }
+                return Task<MqttCommand>.Factory.StartNew(() =>
+                    {
+                        wait.WaitOne(timeout);
+                        return result;
+                    });
             }
         }
 

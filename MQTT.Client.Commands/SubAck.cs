@@ -8,7 +8,7 @@ namespace MQTT.Commands
 {
     public class SubAck : MqttCommand
     {
-        List<QualityOfService> _grants = new List<QualityOfService>();
+        readonly List<QualityOfService> _grants = new List<QualityOfService>();
 
         public SubAck(MessageId messageId)
             : base(new FixedHeader(CommandMessage.SUBACK))

@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Commands;
 using MQTT.Types;
 using System.Threading.Tasks;
-using System.Threading;
 
 namespace MQTT.Domain.StateMachines
 {
     public abstract class StateMachine
     {
-        StateMachineManager _manager;
+        readonly StateMachineManager _manager;
 
         protected StateMachine(StateMachineManager manager)
         {

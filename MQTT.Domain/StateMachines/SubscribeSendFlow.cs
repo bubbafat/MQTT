@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Commands;
 using MQTT.Types;
 using System.Threading.Tasks;
@@ -19,15 +16,15 @@ namespace MQTT.Domain.StateMachines
         {
             if (release == null)
             {
-                release = (MqttCommand p) => { };
+                release = p => { };
             }
             switch (msg.Header.QualityOfService)
             {
                 case QualityOfService.AtLeastOnce:
                     return Send(msg)
-                        .ContinueWith((task) =>
+                        .ContinueWith(task =>
                             WaitFor(CommandMessage.SUBACK, msg.MessageId, TimeSpan.FromSeconds(30)))
-                        .ContinueWith((task) =>
+                        .ContinueWith(task =>
                             release(msg),
                             TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
                 case QualityOfService.AtMostOnce:

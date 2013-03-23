@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using MQTT.Commands;
 using MQTT.Types;
@@ -19,7 +16,7 @@ namespace MQTT.Domain.StateMachines
         {
             if (release == null)
             {
-                release = (MqttCommand p) => { };
+                release = p => { };
             }
 
             switch (msg.Header.QualityOfService)
@@ -38,15 +35,20 @@ namespace MQTT.Domain.StateMachines
 
         private Task ProcessSubscription(MqttCommand msg, Action<MqttCommand> release)
         {
-            SubAck ack = new SubAck(msg.MessageId);
-            Subscribe subCmd = msg as Subscribe;
+            var ack = new SubAck(msg.MessageId);
+            var subCmd = msg as Subscribe;
+            if (subCmd == null)
+            {
+                throw new InvalidOperationException("Subscribe operationg expects Subscribe command");
+            }
+
             foreach (Subscription sub in subCmd.Subscriptions)
             {
                 ack.Grants.Add(QualityOfService.AtMostOnce);
             }
 
             return Send(ack)
-                .ContinueWith((task) =>
+                .ContinueWith(task =>
                     Task.Factory.StartNew(() => release(msg)),
                     TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
         }

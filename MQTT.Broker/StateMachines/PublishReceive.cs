@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Commands;
 using MQTT.Broker.Network;
 using MQTT.Types;
-using System.Threading.Tasks;
 
 namespace MQTT.Broker.StateMachines
 {
     class PublishReceive : StateMachine
     {
-        MqttCommand _command;
-        NamedConnection _connection;
+        readonly MqttCommand _command;
+        readonly NamedConnection _connection;
 
         public PublishReceive(MqttCommand cmd, NamedConnection connection)
         {

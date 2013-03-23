@@ -85,7 +85,7 @@ namespace MQTT.Commands
         {
             return string.Format("{0} ({1} : {2}) {3}",
                 CommandMessage,
-                (MessageId != null) ? MessageId.Value.ToString(CultureInfo.InvariantCulture) : "<missing>",
+                MessageId.Value.ToString(CultureInfo.InvariantCulture),
                 Header.QualityOfService,
                 (Payload != null) ? BitConverter.ToString(Payload).Replace("-", " ") : "<null>");
         }

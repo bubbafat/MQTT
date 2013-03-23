@@ -1,20 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Commands;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Threading;
-using MQTT.Types;
 using MQTT.Domain;
 
 namespace MQTT.Client.Tests
 {
     class MockMqttClient : IMqttClient
     {
-        bool _connected = false;
-        ConcurrentQueue<MqttCommand> _incoming = new ConcurrentQueue<MqttCommand>();
+        bool _connected;
+        readonly ConcurrentQueue<MqttCommand> _incoming = new ConcurrentQueue<MqttCommand>();
 
         public void Connect(System.Net.IPEndPoint endpoint)
         {

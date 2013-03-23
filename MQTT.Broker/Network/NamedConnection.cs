@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using MQTT.Types;
@@ -25,7 +22,7 @@ namespace MQTT.Broker.Network
             Connection = connection;
         }
 
-        internal Task Deliver(Commands.MqttCommand cmd)
+        internal Task Deliver(MqttCommand cmd)
         {
             switch (cmd.CommandMessage)
             {
@@ -76,16 +73,31 @@ namespace MQTT.Broker.Network
             switch (command.CommandMessage)
             {
                 case CommandMessage.SUBSCRIBE:
-                    ActiveSubscriptions.Current.Add(ClientId, (command as Subscribe).Subscriptions);
+                    var sub = command as Subscribe;
+                    if (sub == null)
+                    {
+                        throw new ArgumentException("Message declared itself as Subscribe but was not of type Subscribe", "command");
+                    }
+                    ActiveSubscriptions.Current.Add(ClientId, sub.Subscriptions);
                     break;
                 case CommandMessage.PUBLISH:
-                    foreach (string client in ActiveSubscriptions.Current.Publish(ClientId, (command as Publish).Topic, (command as Publish).Message))
+                    var pub = command as Publish;
+                    if (pub == null)
                     {
-                        Manager.Send(client, new Publish((command as Publish).Topic, (command as Publish).Message));
+                        throw new ArgumentException("Message declared itself as Publish but was not of type Publish", "command");
+                    }
+                    foreach (var client in ActiveSubscriptions.Current.Publish(ClientId, pub.Topic, pub.Message))
+                    {
+                        Manager.Send(client, new Publish(pub.Topic, pub.Message));
                     }
                     break;
                 case CommandMessage.UNSUBSCRIBE:
-                    ActiveSubscriptions.Current.Remove(ClientId, (command as Unsubscribe).Topics);
+                    var unsub = command as Unsubscribe;
+                    if (unsub == null)
+                    {
+                        throw new ArgumentException("Message declared itself as Unsubscribe but was not of type Unsubscribe", "command");
+                    }
+                    ActiveSubscriptions.Current.Remove(ClientId, unsub.Topics);
                     break;
                 case CommandMessage.PINGREQ:
                     Send(new PingReq());
@@ -100,10 +112,7 @@ namespace MQTT.Broker.Network
 
         private Task StartNew(StateMachine machine)
         {
-            return Task.Factory.StartNew(() =>
-                {
-                    machine.Start();
-                }, TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness);
+            return Task.Factory.StartNew(machine.Start, TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness);
         }
 
         internal void Desire(ushort messageId, Action<MqttCommand> callback)
@@ -116,7 +125,7 @@ namespace MQTT.Broker.Network
 
         internal void Send(MqttCommand command)
         {
-            ICommandWriter writer = BrokerFactory.Get<ICommandWriter>();
+            var writer = BrokerFactory.Get<ICommandWriter>();
             writer.Send(Connection, command);
         }
 

@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MQTT.Commands;
 using MQTT.Broker.Network;
 using MQTT.Types;
-using System.Threading.Tasks;
 
 namespace MQTT.Broker.StateMachines
 {
     class SubscribeReceive : StateMachine
     {
-        MqttCommand _command;
-        NamedConnection _connection;
+        readonly MqttCommand _command;
+        readonly NamedConnection _connection;
 
         public SubscribeReceive(MqttCommand cmd, NamedConnection connection)
         {
@@ -38,8 +34,14 @@ namespace MQTT.Broker.StateMachines
 
         private void ProcessSubscription()
         {
-            SubAck ack = new SubAck(_command.MessageId);
-            Subscribe subCmd = _command as Subscribe;
+            var subCmd = _command as Subscribe;
+            if (subCmd == null)
+            {
+                throw new InvalidOperationException("Command was not of type Subscribe");
+            }
+
+            var ack = new SubAck(_command.MessageId);
+            
             foreach (Subscription sub in subCmd.Subscriptions)
             {
                 ack.Grants.Add(QualityOfService.AtMostOnce);

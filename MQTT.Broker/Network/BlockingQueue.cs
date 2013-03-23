@@ -1,21 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading;
 
 namespace MQTT.Broker.Network
 {
     internal class BlockingQueue<T>
     {
-        private readonly Queue<T> m_Queue = new Queue<T>();
+        private readonly Queue<T> _queue = new Queue<T>();
         private readonly object _lock = new object();
 
         public void Enqueue(T item)
         {
             lock (_lock)
             {
-                m_Queue.Enqueue(item);
+                _queue.Enqueue(item);
                 Monitor.Pulse(_lock);
             }
         }
@@ -24,12 +21,12 @@ namespace MQTT.Broker.Network
         {
             lock (_lock)
             {
-                while (m_Queue.Count == 0)
+                while (_queue.Count == 0)
                 {
                     Monitor.Wait(_lock);
                 }
 
-                return m_Queue.Dequeue();
+                return _queue.Dequeue();
             }
         }
     }

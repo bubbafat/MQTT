@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using MQTT.Commands;
 using MQTT.Types;
@@ -19,36 +16,36 @@ namespace MQTT.Domain.StateMachines
         {
             if (onSuccess == null)
             {
-                onSuccess = (MqttCommand p) => { };
+                onSuccess = p => { };
             }
 
             switch (command.Header.QualityOfService)
             {
                 case QualityOfService.AtMostOnce:
                     return Send(command)
-                        .ContinueWith((task) =>
+                        .ContinueWith(task =>
                             onSuccess(command),
                             TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
                 case QualityOfService.AtLeastOnce:
                     return Send(command)
-                        .ContinueWith((task) =>
+                        .ContinueWith(task =>
                             WaitFor(CommandMessage.PUBACK, command.MessageId, TimeSpan.FromSeconds(60)),
                             TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
-                        .ContinueWith((task) =>
+                        .ContinueWith(task =>
                             onSuccess(command),
                             TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
                 case QualityOfService.ExactlyOnce:
                     return Send(command)
-                        .ContinueWith((task) =>
+                        .ContinueWith(task =>
                             WaitFor(CommandMessage.PUBREC, command.MessageId, TimeSpan.FromSeconds(60)),
                             TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
-                        .ContinueWith((task) =>
+                        .ContinueWith(task =>
                             Send(new PubRel(command.MessageId)),
                             TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
-                        .ContinueWith((task) =>
+                        .ContinueWith(task =>
                             WaitFor(CommandMessage.PUBCOMP, command.MessageId, TimeSpan.FromSeconds(60)),
                             TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning)
-                        .ContinueWith((task) =>
+                        .ContinueWith(task =>
                             onSuccess(command),
                             TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.LongRunning);
                 default:

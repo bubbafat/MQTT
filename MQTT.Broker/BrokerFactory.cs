@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Ninject;
+﻿using Ninject;
 using Ninject.Modules;
 using MQTT.Broker.Network;
 using MQTT.Domain;
@@ -11,7 +7,7 @@ namespace MQTT.Broker
 {
     public static class BrokerFactory
     {
-        static IKernel Kernel = new StandardKernel(new MqttProductionModule());
+        static readonly IKernel Kernel = new StandardKernel(new MqttProductionModule());
 
         public static T Get<T>()
         {
