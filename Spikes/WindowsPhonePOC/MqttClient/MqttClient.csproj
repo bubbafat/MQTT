@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.20506</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{CC5E53A5-DE76-4C41-B5DB-E0A369984A02}</ProjectGuid>
+    <ProjectTypeGuids>{C089C8C0-30E0-4E22-80C0-CE093F111A43};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MqttClient</RootNamespace>
+    <AssemblyName>MqttClient</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <TargetFrameworkProfile>WindowsPhone71</TargetFrameworkProfile>
+    <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
+    <SilverlightApplication>false</SilverlightApplication>
+    <ValidateXaml>true</ValidateXaml>
+    <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Bin\Release</OutputPath>
+    <DefineConstants>TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Threading.Tasks.WP71">
+      <HintPath>Lib\System.Threading.Tasks.WP71.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows" />
+    <Reference Include="system" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Net" />
+    <Reference Include="mscorlib.extensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Broker\Network\ActiveConnectionManager.cs" />
+    <Compile Include="Broker\Network\ActiveSubscriptions.cs" />
+    <Compile Include="Broker\Network\BlockingQueue.cs" />
+    <Compile Include="Broker\Network\ClientConnectedEventArgs.cs" />
+    <Compile Include="Broker\Network\ClientDisconnectedEventArgs.cs" />
+    <Compile Include="Broker\Network\IActiveConnectionManager.cs" />
+    <Compile Include="Broker\Network\IConnectionManager.cs" />
+    <Compile Include="Broker\Network\INewConnectionManager.cs" />
+    <Compile Include="Broker\Network\ListenerExceptionEventArgs.cs" />
+    <Compile Include="Broker\Network\MessageReceivedEventArgs.cs" />
+    <Compile Include="Broker\Network\NamedConnection.cs" />
+    <Compile Include="Broker\Network\NewConnectionManager.cs" />
+    <Compile Include="Broker\StateMachines\ConnectReceive.cs" />
+    <Compile Include="Broker\StateMachines\DisconnectReceived.cs" />
+    <Compile Include="Broker\StateMachines\PingReceived.cs" />
+    <Compile Include="Broker\StateMachines\PublishReceive.cs" />
+    <Compile Include="Broker\StateMachines\StateMachine.cs" />
+    <Compile Include="Broker\StateMachines\SubscribeReceive.cs" />
+    <Compile Include="Broker\StateMachines\UnsubscribeReceived.cs" />
+    <Compile Include="CBNet\NetworkStream.cs" />
+    <Compile Include="CBNet\StateObject.cs" />
+    <Compile Include="CBNet\TcpClient.cs" />
+    <Compile Include="CBNet\TimerIntervals.cs" />
+    <Compile Include="Client.cs" />
+    <Compile Include="Commands\ClientCommand.cs" />
+    <Compile Include="Commands\ConnAck.cs" />
+    <Compile Include="Commands\Connect.cs" />
+    <Compile Include="Commands\Disconnect.cs" />
+    <Compile Include="Commands\PingReq.cs" />
+    <Compile Include="Commands\PingResp.cs" />
+    <Compile Include="Commands\ProtocolException.cs" />
+    <Compile Include="Commands\PubAck.cs" />
+    <Compile Include="Commands\PubComp.cs" />
+    <Compile Include="Commands\Publish.cs" />
+    <Compile Include="Commands\PubRec.cs" />
+    <Compile Include="Commands\PubRel.cs" />
+    <Compile Include="Commands\SubAck.cs" />
+    <Compile Include="Commands\Subscribe.cs" />
+    <Compile Include="Commands\UnSubAck.cs" />
+    <Compile Include="Commands\Unsubscribe.cs" />
+    <Compile Include="Domain\ClientCommandEventArgs.cs" />
+    <Compile Include="Domain\CommandReader.cs" />
+    <Compile Include="Domain\CommandWriter.cs" />
+    <Compile Include="Domain\DesireCache.cs" />
+    <Compile Include="Domain\ICommandReader.cs" />
+    <Compile Include="Domain\ICommandWriter.cs" />
+    <Compile Include="Domain\IMqttBroker.cs" />
+    <Compile Include="Domain\INetworkInterface.cs" />
+    <Compile Include="Domain\MqttNetworkBroker.cs" />
+    <Compile Include="Domain\NetworkInterface.cs" />
+    <Compile Include="Domain\NewConnectionEventArgs.cs" />
+    <Compile Include="Domain\StateMachines\ConnectReceiveFlow.cs" />
+    <Compile Include="Domain\StateMachines\ConnectSendFlow.cs" />
+    <Compile Include="Domain\StateMachines\PublishReceiveFlow.cs" />
+    <Compile Include="Domain\StateMachines\PublishSendFlow.cs" />
+    <Compile Include="Domain\StateMachines\StateMachine.cs" />
+    <Compile Include="Domain\StateMachines\StateMachineManager.cs" />
+    <Compile Include="Domain\StateMachines\SubscribeFlow.cs" />
+    <Compile Include="Domain\StateMachines\SubscribeSendFlow.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Types\CommandMessage.cs" />
+    <Compile Include="Types\FixedHeader.cs" />
+    <Compile Include="Types\MessageId.cs" />
+    <Compile Include="Types\MessageIdSequence.cs" />
+    <Compile Include="Types\MQString.cs" />
+    <Compile Include="Types\NetworkConnection.cs" />
+    <Compile Include="Types\QualityOfService.cs" />
+    <Compile Include="Types\StreamExtensions.cs" />
+    <Compile Include="Types\TaskExtensions.cs" />
+    <Compile Include="Types\VariableLengthInteger.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.$(TargetFrameworkProfile).Overrides.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.CSharp.targets" />
+  <ProjectExtensions />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
