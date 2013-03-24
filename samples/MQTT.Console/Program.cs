@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MQTT.Client;
-using MQTT.Client.Console;
 using MQTT.Commands;
 using MQTT.Domain;
 using MQTT.Types;
@@ -15,15 +14,18 @@ namespace MQTT.ConsoleApp
 {
     internal class Program
     {
-        private const string server = "test.mosquitto.org";
-        private const int port = 1883;
+        private const string Server = "test.mosquitto.org";
+        private const int Port = 1883;
         private static readonly string topic = Guid.NewGuid().ToString();
 
         private static readonly ManualResetEvent waitForSubscribed = new ManualResetEvent(false);
         private static readonly object conLock = new object();
 
-        private static void Main(string[] args)
+        private static readonly ManualResetEvent done = new ManualResetEvent(false);
+
+        private static void Main()
         {
+            Console.CancelKeyPress += Console_CancelKeyPress;
             var listeners = new Thread[Environment.ProcessorCount*2];
 
             for (int i = 0; i < listeners.Length; i++)
@@ -43,29 +45,32 @@ namespace MQTT.ConsoleApp
             }
 
             writer.Join();
-            for (int i = 0; i < listeners.Length; i++)
+            foreach (Thread t in listeners)
             {
-                listeners[i].Join();
+                t.Join();
             }
 
             Console.WriteLine("DONE");
         }
 
+        static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            done.Set();
+        }
+
         private static void WriterAction()
         {
-            while (true)
+            try
             {
-                try
-                {
-                    DoWriteAction();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    Thread.Sleep(5000);
-                }
+                DoWriteAction();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                done.Set();
             }
         }
+
 
         private static void DoWriteAction()
         {
@@ -74,10 +79,10 @@ namespace MQTT.ConsoleApp
                 c.OnUnsolicitedMessage += c_OnUnsolicitedMessage;
 
                 IPAddress address =
-                    Dns.GetHostAddresses(server)
+                    Dns.GetHostAddresses(Server)
                        .First(a => a.AddressFamily == AddressFamily.InterNetwork);
 
-                var test = new IPEndPoint(address, port);
+                var test = new IPEndPoint(address, Port);
 
                 Console.WriteLine("WRITER connecting...");
                 DemandWorked(c.Connect(test));
@@ -88,7 +93,7 @@ namespace MQTT.ConsoleApp
                 Console.WriteLine("Subscribe is ready!");
 
                 int count = 0;
-                while (true)
+                while (done.WaitOne(0) == false)
                 {
                     count++;
                     Console.WriteLine("WRITER writing...");
@@ -96,7 +101,7 @@ namespace MQTT.ConsoleApp
                      .Await();
                     Console.WriteLine("WRITER wrote...");
 
-                    Thread.Sleep(5000);
+                    Thread.Sleep(100);
                 }
 
                 c.Disconnect(TimeSpan.FromSeconds(5));
@@ -124,10 +129,10 @@ namespace MQTT.ConsoleApp
                 c.OnUnsolicitedMessage += (c_OnUnsolicitedMessage);
 
                 IPAddress address =
-                    Dns.GetHostAddresses(server)
+                    Dns.GetHostAddresses(Server)
                        .First(a => a.AddressFamily == AddressFamily.InterNetwork);
 
-                var test = new IPEndPoint(address, port);
+                var test = new IPEndPoint(address, Port);
 
                 Console.WriteLine("{0} connecting...", lname);
                 DemandWorked(c.Connect(test));
@@ -142,12 +147,7 @@ namespace MQTT.ConsoleApp
                 Console.WriteLine("{0} subscribed...", lname);
 
                 waitForSubscribed.Set();
-
-                while (true)
-                {
-                    Thread.Sleep(1000);
-                }
-
+                done.WaitOne(-1);
                 c.Disconnect(TimeSpan.FromSeconds(5));
             }
         }
@@ -159,25 +159,30 @@ namespace MQTT.ConsoleApp
             var p = command as Publish;
             if (p != null)
             {
+                var sb = new StringBuilder();
+                if (p.Header.Duplicate)
+                {
+                    sb.Append("!!! DUPLICATE !!! - ");
+                }
+                sb.AppendFormat("TOPIC: {0}", p.Topic);
+                sb.AppendLine();
+                foreach (char c in Encoding.ASCII.GetChars(p.Message))
+                {
+                    if (!char.IsControl(c))
+                    {
+                        sb.Append(c);
+                    }
+                }
+
+                sb.AppendLine();
+                var result = sb.ToString();
+
                 lock (conLock)
                 {
-                    if (p.Header.Duplicate)
-                    {
-                        Console.Write("!!! DUPLICATE !!! - ");
-                    }
-
-                    Console.WriteLine("TOPIC: {0}", p.Topic);
-                    foreach (char c in Encoding.ASCII.GetChars(p.Message))
-                    {
-                        if (!char.IsControl(c))
-                        {
-                            Console.Write(c);
-                        }
-                    }
-
-                    Console.WriteLine();
+                    Console.WriteLine(result);
                 }
             }
+
         }
 
         private static void DemandWorked(Task task)

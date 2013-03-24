@@ -8,17 +8,14 @@ namespace MQTT.Types
 
         public MessageId Next()
         {
+            ushort temp;
+
             lock (_lock)
             {
-                if (_last == ushort.MaxValue)
-                {
-                    _last = 0;
-                }
-
-                _last++;
-
-                return new MessageId(_last);
+                temp = _last++;
             }
+
+            return new MessageId(temp);
         }
     }
 }
