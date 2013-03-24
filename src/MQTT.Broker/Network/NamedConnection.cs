@@ -68,8 +68,6 @@ namespace MQTT.Broker.Network
 
         internal void Complete(MqttCommand command)
         {
-            System.Diagnostics.Debug.WriteLine("FINISHED: {0} {1}", command.CommandMessage, command.MessageId);
-
             switch (command.CommandMessage)
             {
                 case CommandMessage.SUBSCRIBE:

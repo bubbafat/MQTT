@@ -44,14 +44,7 @@ namespace MQTT.Types
 
             do
             {
-                if (connection.Available >= 1)
-                {
-                    digit = connection.Stream.ReadByteOrFail();
-                }
-                else
-                {
-                    digit = connection.Stream.ReadBytesOrFailAsync(1).Await().Result[0];
-                }
+                digit = connection.Stream.ReadBytesOrFailAsync(1).Await().Result[0];
                 result += (digit & 127) * multiplier;
                 multiplier *= 128;
                 bytesRead++;

@@ -17,28 +17,6 @@ namespace MQTT.Types
             throw new InvalidOperationException("Unable to read the required length from the string");
         }
 
-        public static byte[] ReadBytesOrFail(this Stream stream, int length)
-        {
-            var result = new byte[length];
-            int remaining = length;
-            int readStart = 0;
-            while (remaining > 0)
-            {
-                int actuallyRead = stream.Read(result, readStart, remaining);
-                if (actuallyRead > 0)
-                {
-                    remaining -= actuallyRead;
-                    readStart += actuallyRead;
-                }
-                else
-                {
-                    throw new InvalidOperationException("Unable to read the required length from the string");
-                }
-            }
-
-            return result;
-        }
-
         public static Task<byte[]> ReadBytesOrFailAsync(this Stream stream, int length)
         {
             return Task.Factory.StartNew(() =>
@@ -82,13 +60,29 @@ namespace MQTT.Types
 
         public static ushort ReadUint16(this Stream stream)
         {
-            byte[] bytes = ReadBytesOrFail(stream, 2);
-            return (ushort)((bytes[0] << 8) + bytes[1]);
+            var bytes = new byte[2];
+            var result = stream.ReadAsync(bytes, 0, 2).Await();
+            if (result.IsCompleted)
+            {
+                return (ushort)((bytes[0] << 8) + bytes[1]);                
+            }
+
+            if (result.IsCanceled)
+            {
+                throw new TaskCanceledException();
+            }
+
+            if (result.IsFaulted && result.Exception != null)
+            {
+                throw result.Exception;
+            }
+
+            throw new InvalidOperationException("Reading a ushort faulted but no exception was provided.");
         }
 
         public static byte[] ReadRest(this Stream stream)
         {
-            return stream.ReadBytesOrFail((int)(stream.Length - stream.Position));
+            return stream.ReadBytesOrFailAsync((int)(stream.Length - stream.Position)).Await().Result;
         }
     }
 }

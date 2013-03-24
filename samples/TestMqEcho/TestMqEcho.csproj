@@ -48,19 +48,19 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\MQTT.Client.Commands\MQTT.Client.Commands.csproj">
+    <ProjectReference Include="..\..\src\MQTT.Client.Commands\MQTT.Client.Commands.csproj">
       <Project>{5785076C-CD22-4D94-9E9B-F11249171F37}</Project>
       <Name>MQTT.Client.Commands</Name>
     </ProjectReference>
-    <ProjectReference Include="..\src\MQTT.Client\MQTT.Client.csproj">
+    <ProjectReference Include="..\..\src\MQTT.Client\MQTT.Client.csproj">
       <Project>{a371d7f6-3e70-4f59-84c1-da0dee1df2eb}</Project>
       <Name>MQTT.Client</Name>
     </ProjectReference>
-    <ProjectReference Include="..\src\MQTT.Domain\MQTT.Domain.csproj">
+    <ProjectReference Include="..\..\src\MQTT.Domain\MQTT.Domain.csproj">
       <Project>{b4b1a948-5caf-4d58-b655-c023d5d59abf}</Project>
       <Name>MQTT.Domain</Name>
     </ProjectReference>
-    <ProjectReference Include="..\src\MQTT.Types\MQTT.Types.csproj">
+    <ProjectReference Include="..\..\src\MQTT.Types\MQTT.Types.csproj">
       <Project>{D7E0B27D-DD60-4C87-B30D-B1AA5CBB6501}</Project>
       <Name>MQTT.Types</Name>
     </ProjectReference>

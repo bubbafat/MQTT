@@ -4,6 +4,7 @@ using System.Threading;
 using MQTT.Client;
 using MQTT.Commands;
 using MQTT.Domain;
+using MQTT.Types;
 
 namespace TestMqEcho
 {
@@ -25,7 +26,7 @@ namespace TestMqEcho
             {
                 client.OnUnsolicitedMessage += client_OnUnsolicitedMessage;
                 client.Connect(server, port).Wait();
-                client.Subscribe("#").Wait();
+                client.Subscribe("#", QualityOfService.AtMostOnce).Wait();
 
                 stopEvent.WaitOne(-1);
             }

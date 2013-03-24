@@ -119,7 +119,7 @@ namespace MQTT.Commands
 
         internal static ConnectFlags FromStream(Stream stream)
         {
-            byte b = stream.ReadByteOrFail();
+            byte b = stream.ReadBytesOrFailAsync(1).Await().Result[0];
             var flags = new ConnectFlags
                 {
                     UserName = (b & 0x80) == 0x80,
@@ -174,7 +174,7 @@ namespace MQTT.Commands
             var header = new V3ConnectVariableHeader
                 {
                     ProtocolName = MqString.FromStream(stream),
-                    Protocolversion = stream.ReadByteOrFail(),
+                    Protocolversion = stream.ReadBytesOrFailAsync(1).Await().Result[0],
                     ConnectFlags = ConnectFlags.FromStream(stream),
                     KeepAliveTimer = stream.ReadUint16()
                 };

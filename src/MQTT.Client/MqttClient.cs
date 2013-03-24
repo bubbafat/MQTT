@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -98,15 +97,15 @@ namespace MQTT.Client
             return publish.Start(pub, completed);
         }
 
-        public Task Subscribe(string topic)
+        public Task Subscribe(string topic, QualityOfService qos)
         {
-            return Subscribe(topic, null);
+            return Subscribe(topic, qos, null);
         }
 
-        public Task Subscribe(string topic, Action<MqttCommand> completed)
+        public Task Subscribe(string topic, QualityOfService qos, Action<MqttCommand> completed)
         {
             return Subscribe(
-                new[] { new Subscription(topic, QualityOfService.ExactlyOnce)}, 
+                new[] { new Subscription(topic, qos)}, 
                 completed);
         }
 
@@ -127,8 +126,6 @@ namespace MQTT.Client
         private void ClientOnMessageReceived(object sender, ClientCommandEventArgs e)
         {
             MqttCommand command = e.Command;
-
-            Debug.WriteLine("RECV: {0} ({1})", command.CommandMessage, command.MessageId);
 
             lock (_lastHeaderLock)
             {

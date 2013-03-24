@@ -101,7 +101,7 @@ namespace MQTT.ConsoleApp
                      .Await();
                     Console.WriteLine("WRITER wrote...");
 
-                    Thread.Sleep(100);
+                    Thread.Sleep(5000);
                 }
 
                 c.Disconnect(TimeSpan.FromSeconds(5));
