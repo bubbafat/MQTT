@@ -23,7 +23,7 @@ namespace MQTT.Domain.StateMachines
 
         protected Task<MqttCommand> WaitFor(CommandMessage message, MessageId messageId, TimeSpan timeout)
         {
-            return _manager.WaitForCommand(message, messageId, timeout);
+            return _manager.WaitForCommand(message, messageId, timeout).Await();
         }
 
         protected Task Send(MqttCommand message)

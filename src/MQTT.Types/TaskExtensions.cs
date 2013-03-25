@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MQTT.Types
@@ -44,6 +45,5 @@ namespace MQTT.Types
                     throw new InvalidOperationException("I have no idea...");
             }
         }
-
     }
 }

@@ -12,6 +12,7 @@
     <AssemblyName>MQTT.Domain</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +31,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -50,7 +53,9 @@
     <Compile Include="NetworkInterface.cs" />
     <Compile Include="NewConnectionEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="KeepAliveExpiredEventArgs.cs" />
     <Compile Include="StateMachines\ConnectReceiveFlow.cs" />
+    <Compile Include="StateMachines\PingSendFlow.cs" />
     <Compile Include="StateMachines\StateMachineManager.cs" />
     <Compile Include="StateMachines\ConnectSendFlow.cs" />
     <Compile Include="StateMachines\PublishReceiveFlow.cs" />

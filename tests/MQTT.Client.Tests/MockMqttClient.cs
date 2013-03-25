@@ -12,6 +12,11 @@ namespace MQTT.Client.Tests
         bool _connected;
         readonly ConcurrentQueue<MqttCommand> _incoming = new ConcurrentQueue<MqttCommand>();
 
+        public MockMqttClient()
+        {
+            SendPingResponses = true;
+        }
+
         public void Connect(System.Net.IPEndPoint endpoint)
         {
             _connected = true;
@@ -77,6 +82,15 @@ namespace MQTT.Client.Tests
                         recv(this, new ClientCommandEventArgs(new ConnAck()));
                     }
                     break;
+                case Types.CommandMessage.PINGREQ:
+                    if (SendPingResponses)
+                    {
+                        if (recv != null)
+                        {
+                            recv(this, new ClientCommandEventArgs(new PingResp()));
+                        }
+                    }
+                    break;
                 case Types.CommandMessage.DISCONNECT:
                     break;
                 default:
@@ -95,5 +109,7 @@ namespace MQTT.Client.Tests
         {
             // do nothing
         }
+
+        public bool SendPingResponses { get; set; }
     }
 }

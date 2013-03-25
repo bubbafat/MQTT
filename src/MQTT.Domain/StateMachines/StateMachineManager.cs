@@ -52,7 +52,9 @@ namespace MQTT.Domain.StateMachines
                 case CommandMessage.SUBSCRIBE:
                     var subFlow = new SubscribeFlow(this);
                     return subFlow.Start(command, onSuccess);
-
+                case CommandMessage.PINGREQ:
+                    var pingFlow = new PingSendFlow(this);
+                    return pingFlow.Start(command, onSuccess);
                 default:
                     var tcs = new TaskCompletionSource<object>();
                     tcs.SetException(new InvalidOperationException("Unhandled command type"));
