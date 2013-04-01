@@ -1,30 +1,56 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace MQTT.Types
 {
     public class NetworkConnection
     {
         readonly TcpClient _client;
+        
+        public NetworkConnection()
+            : this(new TcpClient())
+        {
+        }
 
         public NetworkConnection(TcpClient client)
         {
             _client = client;
-            Stream = _client.GetStream();
         }
 
-        public NetworkStream Stream { get; private set; }
+
+        public Task Connect(IPEndPoint endpoint)
+        {
+            return _client.ConnectAsync(endpoint.Address, endpoint.Port);
+        }
+
+        public Task Write(byte[] bytes)
+        {
+            return Write(bytes, 0, bytes.Length);
+        }
+
+        public Task Write(byte[] bytes, int offset, int length)
+        {
+            Debug.WriteLine("{0} : Writing {1} bytes", DateTime.Now.ToString("o"), length);
+            return Stream.WriteAsync(bytes, offset, length);
+        }
+
+        public void Flush()
+        {
+            Stream.Flush();
+        }
+
+        public Task<byte[]> ReadBytesOrFailAsync(int length)
+        {
+            Debug.WriteLine("{0} : Reading {1} bytes", DateTime.Now.ToString("o"), length);
+            return Stream.ReadBytesOrFailAsync(length);
+        }
 
         public void Disconnect()
         {
             _client.Close();
-        }
-
-        public int Available
-        {
-            get
-            {
-                return _client.Available;
-            }
         }
 
         public bool Connected
@@ -33,6 +59,11 @@ namespace MQTT.Types
             {
                 return _client.Connected;
             }
+        }
+
+        private NetworkStream Stream
+        {
+            get { return _client.GetStream(); }
         }
     }
 }

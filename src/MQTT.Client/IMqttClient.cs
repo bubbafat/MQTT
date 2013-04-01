@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Threading.Tasks;
 using MQTT.Domain;
 
 namespace MQTT.Client
@@ -7,7 +8,8 @@ namespace MQTT.Client
 
     public interface IMqttClient : INetworkInterface
     {
-        void Connect(IPEndPoint endpoint);
+        Task Connect(IPEndPoint endpoint);
+        void Receive();
         event MessageReceivedCallback OnMessageReceived;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using MQTT.Commands;
 using System.Threading.Tasks;
@@ -7,15 +8,31 @@ using System.Threading;
 
 namespace MQTT.Domain
 {
+    public delegate void NetworkDisconnectedCallback(object sender, NetworkDisconenctedEventArgs e);
+
+    public class NetworkDisconenctedEventArgs : EventArgs
+    {
+        public NetworkDisconenctedEventArgs(NetworkConnection connection, Exception exception = null)
+        {
+            Connection = connection;
+            Exception = exception;
+        }
+
+        public NetworkConnection Connection { get; private set; }
+        public Exception Exception { get; private set; }
+    }
+
+
     public sealed class NetworkInterface : INetworkInterface
     {
         Thread _recvThread;
-        NetworkConnection _connection;
+        readonly NetworkConnection _connection;
         readonly ICommandReader _reader;
         readonly ICommandWriter _writer;
 
         public NetworkInterface(ICommandReader reader, ICommandWriter writer)
         {
+            _connection = new NetworkConnection();
             _reader = reader;
             _writer = writer;
         }
@@ -33,26 +50,17 @@ namespace MQTT.Domain
 
         public Task Send(MqttCommand command)
         {
-            var tcs = new TaskCompletionSource<object>();
-            try
-            {
-                _writer.Send(_connection, command);
-                tcs.SetResult(null);
-            }
-            catch (Exception ex)
-            {
-                tcs.SetException(ex);
-            }
-
-            return tcs.Task;
+            return _writer.Send(_connection, command);
         }
 
-        public void Start(TcpClient client, Action<MqttCommand> onIncomingMessage)
+        public Task Connect(IPEndPoint endpoint)
         {
-            _connection= new NetworkConnection(client);
+            return _connection.Connect(endpoint);
+        }
 
+        public void Start(Action<MqttCommand> onIncomingMessage)
+        {
             _recvThread = new Thread(() => ReceiveLoop(onIncomingMessage));
-
             _recvThread.Start();
         }
 
@@ -69,6 +77,17 @@ namespace MQTT.Domain
             // do nothing
         }
 
+        public event NetworkDisconnectedCallback OnNetworkDisconnected;
+
+        private void NotifyOfDisconnect(NetworkConnection connection, Exception ex)
+        {
+            NetworkDisconnectedCallback ev = OnNetworkDisconnected;
+            if (ev != null)
+            {
+                ev(this, new NetworkDisconenctedEventArgs(connection, ex));
+            }
+        }
+
         private void ReceiveLoop(Action<MqttCommand> recv)
         {
             try
@@ -83,13 +102,14 @@ namespace MQTT.Domain
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 if (_connection.Connected)
                 {
                     _connection.Disconnect();
                 }
-                // swallow and let the thread die naturally
+
+                NotifyOfDisconnect(_connection, ex);
             }
         }
     }

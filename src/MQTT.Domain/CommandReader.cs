@@ -9,7 +9,7 @@ namespace MQTT.Domain
         {
             var header = FixedHeader.Load(connection);
 
-            byte[] data = connection.Stream.ReadBytesOrFailAsync(header.RemainingLength).Await().Result;
+            byte[] data = connection.ReadBytesOrFailAsync(header.RemainingLength).Await().Result;
 
             return MqttCommand.Create(header, data);
         }

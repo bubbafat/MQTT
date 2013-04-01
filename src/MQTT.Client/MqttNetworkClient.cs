@@ -13,20 +13,32 @@ namespace MQTT.Client
         public MqttNetworkClient(INetworkInterface network)
         {
             _network = network;
+            _network.OnNetworkDisconnected += (sender, args) =>
+            {
+                var dis = OnNetworkDisconnected;
+                if (dis != null)
+                {
+                    dis(this, args);
+                }
+            };
         }
 
-        public void Connect(System.Net.IPEndPoint endpoint)
+        public Task Connect(System.Net.IPEndPoint endpoint)
         {
-            var client = new TcpClient();
-            client.Connect(endpoint);
-            _network.Start(client, cmd =>
+            return _network.Connect(endpoint);
+        }
+
+        public void Receive()
+        {
+            _network.Start(cmd =>
+            {
+                var recv = OnMessageReceived;
+                if (recv != null)
                 {
-                    var recv = OnMessageReceived;
-                    if (recv != null)
-                    {
-                        recv(this, new ClientCommandEventArgs(cmd));
-                    }
-                });
+                    recv(this, new ClientCommandEventArgs(cmd));
+                }
+            });
+
         }
 
         public void Disconnect()
@@ -48,15 +60,16 @@ namespace MQTT.Client
         }
 
         public event MessageReceivedCallback OnMessageReceived;
-
+        public event NetworkDisconnectedCallback OnNetworkDisconnected;
+        
         public void Dispose()
         {
             using (_network) { }
         }
 
-        public void Start(TcpClient client, Action<MqttCommand> onIncomingMessage)
+        public void Start(Action<MqttCommand> onIncomingMessage)
         {
-            _network.Start(client, onIncomingMessage);
+            _network.Start(onIncomingMessage);
         }
     }
 }

@@ -124,7 +124,7 @@ namespace MQTT.Broker.Network
         internal void Send(MqttCommand command)
         {
             var writer = BrokerFactory.Get<ICommandWriter>();
-            writer.Send(Connection, command);
+            writer.Send(Connection, command).Await();
         }
 
         internal IActiveConnectionManager Manager { get; set; }

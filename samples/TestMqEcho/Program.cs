@@ -17,19 +17,49 @@ namespace TestMqEcho
         {
             Console.CancelKeyPress += Console_CancelKeyPress;
 
+//            const string server = "localhost";
+//            const string server = "broker.mqttdashboard.com";
             const string server = "test.mosquitto.org";
-            const int port = 1883;
 
-            string clientName = Guid.NewGuid().ToString();
+            string clientName = "horvick22"; //  Guid.NewGuid().ToString();
 
             using (var client = new MqttClient(clientName))
             {
                 client.OnUnsolicitedMessage += client_OnUnsolicitedMessage;
-                client.Connect(server, port).Wait();
-                client.Subscribe("#", QualityOfService.AtMostOnce).Wait();
+                client.OnNetworkDisconnected += client_OnNetworkDisconnected;
+                client.Connect(server, keepAliveSeconds: 15).Await();
+                client.Ping().Await();
+//                client.Subscribe("#", QualityOfService.AtMostOnce).Await();
 
                 stopEvent.WaitOne(-1);
             }
+        }
+
+        static void client_OnNetworkDisconnected(object sender, NetworkDisconenctedEventArgs e)
+        {
+            stopEvent.Set();
+            //if (e.Exception != null)
+            //{
+            //    Exception ex = e.Exception;
+            //    while (ex != null)
+            //    {
+            //        Console.WriteLine(ex.ToString());
+            //        ex = ex.InnerException;
+            //    }
+            //}
+
+            //MqttClient client = sender as MqttClient;
+            //if (client != null)
+            //{
+            //    Console.WriteLine("Attempting to reconnect...");
+            //    client.Reconnect().Await();
+            //    Console.WriteLine("Reconnected!");
+            //}
+            //else
+            //{
+            //    Console.WriteLine("Unable to reconnect.");
+            //    stopEvent.Set();
+            //}
         }
 
         static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)

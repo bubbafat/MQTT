@@ -9,7 +9,8 @@ namespace MQTT.Client.Tests
 {
     class MockMqttClient : IMqttClient
     {
-        bool _connected;
+        private bool _connected;
+        private bool _listening;
         readonly ConcurrentQueue<MqttCommand> _incoming = new ConcurrentQueue<MqttCommand>();
 
         public MockMqttClient()
@@ -17,14 +18,34 @@ namespace MQTT.Client.Tests
             SendPingResponses = true;
         }
 
-        public void Connect(System.Net.IPEndPoint endpoint)
+        public Task Connect(System.Net.IPEndPoint endpoint)
         {
-            _connected = true;
+            var tcs = new TaskCompletionSource<object>();
+            try
+            {
+                _connected = true;
+                tcs.SetResult(null);
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+
+            return tcs.Task;
         }
 
-        public void Listen(System.Net.IPEndPoint endpoint)
+        public void Receive()
         {
-            _connected = true;
+            _listening = true;
+        }
+
+        public void Listen()
+        {
+            if (!_connected)
+            {
+                throw new InvalidOperationException("Listen called on non-connected client");
+            }
+            _listening = true;
         }
 
         public void Disconnect()
@@ -104,8 +125,9 @@ namespace MQTT.Client.Tests
         }
 
         public event MessageReceivedCallback OnMessageReceived;
+        public event NetworkDisconnectedCallback OnNetworkDisconnected;
 
-        public void Start(System.Net.Sockets.TcpClient client, Action<MqttCommand> onIncomingMessage)
+        public void Start(Action<MqttCommand> onIncomingMessage)
         {
             // do nothing
         }

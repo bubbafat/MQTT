@@ -14,7 +14,7 @@ namespace MQTT.ConsoleApp
 {
     internal class Program
     {
-        private const string Server = "test.mosquitto.org";
+        private const string Server = "localhost"; // "test.mosquitto.org";
         private const int Port = 1883;
         private static readonly string topic = Guid.NewGuid().ToString();
 
@@ -96,12 +96,11 @@ namespace MQTT.ConsoleApp
                 while (done.WaitOne(0) == false)
                 {
                     count++;
-                    Console.WriteLine("WRITER writing...");
-                    c.Publish(topic, string.Format("This is message {0}!", count), QualityOfService.ExactlyOnce, null)
-                     .Await();
-                    Console.WriteLine("WRITER wrote...");
+                    // Console.WriteLine("WRITER writing...");
+                    c.Publish(topic, string.Format("This is message {0}!", count), QualityOfService.AtLeastOnce, null); // .Await();
+                    // Console.WriteLine("WRITER wrote...");
 
-                    Thread.Sleep(5000);
+                    Thread.Sleep(50);
                 }
 
                 c.Disconnect(TimeSpan.FromSeconds(5));
@@ -142,7 +141,7 @@ namespace MQTT.ConsoleApp
                 DemandWorked(c.Subscribe(
                     new[]
                         {
-                            new Subscription(topic, QualityOfService.ExactlyOnce),
+                            new Subscription(topic, QualityOfService.AtLeastOnce),
                         }, null));
                 Console.WriteLine("{0} subscribed...", lname);
 
@@ -154,6 +153,7 @@ namespace MQTT.ConsoleApp
 
         private static void c_OnUnsolicitedMessage(object sender, ClientCommandEventArgs e)
         {
+            return;
             MqttCommand command = e.Command;
 
             var p = command as Publish;

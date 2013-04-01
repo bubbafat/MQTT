@@ -6,17 +6,6 @@ namespace MQTT.Types
 {
     public static class StreamExtensions
     {
-        public static byte ReadByteOrFail(this Stream stream)
-        {
-            int read = stream.ReadByte();
-            if (read >= 0)
-            {
-                return (byte)read;
-            }
-
-            throw new InvalidOperationException("Unable to read the required length from the string");
-        }
-
         public static Task<byte[]> ReadBytesOrFailAsync(this Stream stream, int length)
         {
             return Task.Factory.StartNew(() =>
@@ -26,58 +15,45 @@ namespace MQTT.Types
                     int readStart = 0;
                     while (remaining > 0)
                     {
-                        int actuallyRead = stream.ReadAsync(result, readStart, remaining).Await().Result;
-                        if (actuallyRead > 0)
+                        var task = stream.ReadAsync(result, readStart, remaining).Await();
+                        if (task.IsCompleted)
                         {
-                            remaining -= actuallyRead;
-                            readStart += actuallyRead;
+                            int actuallyRead = task.Result;
+                            if (actuallyRead > 0)
+                            {
+                                remaining -= actuallyRead;
+                                readStart += actuallyRead;
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException("Unable to read the required length from the stream");
+                            }
                         }
                         else
                         {
-                            throw new InvalidOperationException("Unable to read the required length from the string");
+                            if (task.IsFaulted)
+                            {
+                                if (task.Exception != null)
+                                {
+                                    throw task.Exception;
+                                }
+                             
+                                throw new InvalidOperationException(
+                                    "The read operation faulted but did not return exception details.");
+                            }
+
+                            throw new OperationCanceledException("The read operation was cancelled");
                         }
                     }
 
                     return result;
-                }, TaskCreationOptions.LongRunning);
-        }
-
-
-        public static Task<int> ReadAsync(
-            this Stream stream, byte[] buffer, int offset, int size)
-        {
-            var tcs = new TaskCompletionSource<int>(stream);
-            stream.BeginRead(buffer, offset, size, iar =>
-            {
-                var t = (TaskCompletionSource<int>)iar.AsyncState;
-                var s = (Stream)t.Task.AsyncState;
-                try { t.TrySetResult(s.EndRead(iar)); }
-                catch (Exception exc) { t.TrySetException(exc); }
-            }, tcs);
-
-            return tcs.Task;
+                });
         }
 
         public static ushort ReadUint16(this Stream stream)
         {
-            var bytes = new byte[2];
-            var result = stream.ReadAsync(bytes, 0, 2).Await();
-            if (result.IsCompleted)
-            {
-                return (ushort)((bytes[0] << 8) + bytes[1]);                
-            }
-
-            if (result.IsCanceled)
-            {
-                throw new TaskCanceledException();
-            }
-
-            if (result.IsFaulted && result.Exception != null)
-            {
-                throw result.Exception;
-            }
-
-            throw new InvalidOperationException("Reading a ushort faulted but no exception was provided.");
+            var bytes = stream.ReadBytesOrFailAsync(2).Await().Result;
+            return (ushort) ((bytes[0] << 8) + bytes[1]);
         }
 
         public static byte[] ReadRest(this Stream stream)

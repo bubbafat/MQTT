@@ -92,7 +92,7 @@ namespace MQTT.Commands
 
                         while (stream.Position < stream.Length)
                         {
-                            Subscriptions.Add(new Subscription(MqString.FromStream(stream), (QualityOfService)stream.ReadByteOrFail()));
+                            Subscriptions.Add(new Subscription(MqString.FromStream(stream), (QualityOfService)stream.ReadBytesOrFailAsync(1).Await().Result[0]));
                         }
                     }
                 }

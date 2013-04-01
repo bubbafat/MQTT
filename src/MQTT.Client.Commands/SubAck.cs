@@ -48,7 +48,7 @@ namespace MQTT.Commands
 
                 while (stream.Position < stream.Length)
                 {
-                    byte qosByte = stream.ReadByteOrFail();
+                    byte qosByte = stream.ReadBytesOrFailAsync(1).Await().Result[0];
                     qosByte = (byte)(qosByte & 0x03); // 00000011
                     _grants.Add((QualityOfService)qosByte);
                 }

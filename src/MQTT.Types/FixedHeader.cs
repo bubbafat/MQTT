@@ -43,7 +43,7 @@ namespace MQTT.Types
 
         public static FixedHeader Load(NetworkConnection connection)
         {
-            byte firstByte = connection.Stream.ReadBytesOrFailAsync(1).Await().Result[0];
+            byte firstByte = connection.ReadBytesOrFailAsync(1).Await().Result[0];
 
             var header = new FixedHeader
                 {

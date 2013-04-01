@@ -26,7 +26,7 @@ namespace MQTT.Broker.StateMachines
 
             var connect = (Connect)command;
 
-            _writer.Send(connection, new ConnAck());
+            _writer.Send(connection, new ConnAck()).Await();
 
             return new NamedConnection(connect.ClientIdentifier, connection);
         }
