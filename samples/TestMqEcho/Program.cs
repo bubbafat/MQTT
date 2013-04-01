@@ -21,15 +21,14 @@ namespace TestMqEcho
 //            const string server = "broker.mqttdashboard.com";
             const string server = "test.mosquitto.org";
 
-            string clientName = "horvick22"; //  Guid.NewGuid().ToString();
+            const string clientName = "horvick";
 
             using (var client = new MqttClient(clientName))
             {
                 client.OnUnsolicitedMessage += client_OnUnsolicitedMessage;
                 client.OnNetworkDisconnected += client_OnNetworkDisconnected;
-                client.Connect(server, keepAliveSeconds: 15).Await();
-                client.Ping().Await();
-//                client.Subscribe("#", QualityOfService.AtMostOnce).Await();
+                client.Connect(server, cleanSession: true).Await();
+                client.Subscribe("#", QualityOfService.AtMostOnce).Await();
 
                 stopEvent.WaitOne(-1);
             }
@@ -38,28 +37,6 @@ namespace TestMqEcho
         static void client_OnNetworkDisconnected(object sender, NetworkDisconenctedEventArgs e)
         {
             stopEvent.Set();
-            //if (e.Exception != null)
-            //{
-            //    Exception ex = e.Exception;
-            //    while (ex != null)
-            //    {
-            //        Console.WriteLine(ex.ToString());
-            //        ex = ex.InnerException;
-            //    }
-            //}
-
-            //MqttClient client = sender as MqttClient;
-            //if (client != null)
-            //{
-            //    Console.WriteLine("Attempting to reconnect...");
-            //    client.Reconnect().Await();
-            //    Console.WriteLine("Reconnected!");
-            //}
-            //else
-            //{
-            //    Console.WriteLine("Unable to reconnect.");
-            //    stopEvent.Set();
-            //}
         }
 
         static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)

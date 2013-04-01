@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using MQTT.Commands;
@@ -15,8 +14,6 @@ using Timer = System.Timers.Timer;
 namespace MQTT.Client
 {
     public delegate void UnsolicitedMessageCallback(object sender, ClientCommandEventArgs e);
-
-    public delegate void KeepAliveExpiredCallback(object sender, KeepAliveExpiredEventArgs e);
 
     public sealed class MqttClient : IDisposable
     {
@@ -53,7 +50,6 @@ namespace MQTT.Client
             _client.OnMessageReceived += ClientOnMessageReceived;
             _client.OnNetworkDisconnected += ClientOnOnNetworkDisconnected;
             _manager = new StateMachineManager(_client);
-            KeepAlivePingResponseMinimumWait = 15;
         }
 
         public ClientState State
@@ -84,7 +80,12 @@ namespace MQTT.Client
             return _manager.StartNew(new PingReq(), null);
         }
 
-        public Task Connect(string server, int port = DefaultMqttPort, ushort keepAliveSeconds = DefaultKeepAliveSeconds)
+        public Task Connect(string server, 
+            int port = DefaultMqttPort, 
+            ushort keepAliveSeconds = DefaultKeepAliveSeconds, 
+            bool cleanSession = false,
+            string userName = null,
+            string password = null)
         {
             IPAddress address =
                 Dns.GetHostAddresses(server)
@@ -93,7 +94,11 @@ namespace MQTT.Client
             return Connect(new IPEndPoint(address, port), keepAliveSeconds);
         }
 
-        public Task Connect(IPEndPoint endpoint, ushort keepAliveSeconds = DefaultKeepAliveSeconds)
+        public Task Connect(IPEndPoint endpoint, 
+            ushort keepAliveSeconds = DefaultKeepAliveSeconds, 
+            bool cleanSession = false,
+            string userName = null,
+            string password = null)
         {
             _reconnectEndpoint = endpoint;
             _reconnectKeepAlive = keepAliveSeconds;
@@ -103,9 +108,22 @@ namespace MQTT.Client
             KeepAliveSeconds = keepAliveSeconds;
             _clientState = ClientState.Connecting;
 
-            var connect = new ConnectSendFlow(_manager);
-            return connect.Start(new Connect(ClientId, keepAliveSeconds),
-                                 startCmd =>
+            var connectFlow = new ConnectSendFlow(_manager);
+
+            var connectCommand = new Connect(ClientId, keepAliveSeconds);
+            connectCommand.Details.ConnectFlags.CleanSession = cleanSession;
+            if (string.IsNullOrEmpty(userName) == false)
+            {
+                connectCommand.Details.ConnectFlags.UserName = true;
+                connectCommand.UserName = userName;
+            }
+            if (string.IsNullOrEmpty(password) == false)
+            {
+                connectCommand.Details.ConnectFlags.Password = true;
+                connectCommand.Password = password;
+            }
+
+            return connectFlow.Start(connectCommand, startCmd =>
                                      {
                                          _clientState = ClientState.Connected;
                                          ResetTimer();
@@ -135,7 +153,6 @@ namespace MQTT.Client
         }
 
         public ushort KeepAliveSeconds { get; private set; }
-        public ushort KeepAlivePingResponseMinimumWait { get; set; }
 
         public Task Publish(string topic, string message, QualityOfService qos, Action<MqttCommand> completed)
         {
@@ -179,7 +196,6 @@ namespace MQTT.Client
         }
 
         public event UnsolicitedMessageCallback OnUnsolicitedMessage;
-        public event KeepAliveExpiredCallback OnKeepAliveExpired;
         public event NetworkDisconnectedCallback OnNetworkDisconnected;
 
         private void ClientOnOnNetworkDisconnected(object sender, NetworkDisconenctedEventArgs networkDisconenctedEventArgs)
@@ -239,51 +255,19 @@ namespace MQTT.Client
             _timer.Start();
         }
 
-        private void NotifyOfTimeout()
-        {
-            var callback = OnKeepAliveExpired;
-            if (callback != null)
-            {
-                callback(this, new KeepAliveExpiredEventArgs(DateTime.UtcNow, KeepAliveSeconds));
-            }
-        }
-
         private void _timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             _timer.Stop();
-
-            Task ping = _manager.StartNew(new PingReq(), null);
-
-            // the threshold between when we ping and when we disconnect
-            long ticksInKAThreshold = (KeepAliveSeconds*TimeSpan.TicksPerSecond) -
-                                      (long)
-                                      ((KeepAliveSeconds*TimeSpan.TicksPerSecond*DefaultKeepAliveThreshold));
-
-            // but let's at least be reasonable in how long we wait...
-            int pingWindowMS = (int) Math.Max((float) ticksInKAThreshold/TimeSpan.TicksPerMillisecond,
-                                              TimeSpan.FromSeconds(KeepAlivePingResponseMinimumWait)
-                                                      .TotalMilliseconds);
-
-            var tasks = new[]
-                {
-                    ping,
-                    Task.Factory.StartNew(() => Thread.Sleep(pingWindowMS))
-                };
-
-            var first = Task.WaitAny(tasks);
-            Task finished = tasks[first];
-            if (finished == ping)
+            try
             {
-                if (finished.IsCompleted)
-                {
-                    _timer.Start();
-                    return;
-                }
+                Ping().Wait();
+                _timer.Start();
             }
-
-            LocalDisconnect();
-            NotifyOfTimeout();
-            return;
+            catch(Exception)
+            {
+                LocalDisconnect();
+                throw;
+            }
         }
     }
 
