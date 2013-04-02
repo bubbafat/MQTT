@@ -33,7 +33,6 @@ namespace MQTT.Types
 
         public Task Write(byte[] bytes, int offset, int length)
         {
-            Debug.WriteLine("{0} : Writing {1} bytes", DateTime.Now.ToString("o"), length);
             return Stream.WriteAsync(bytes, offset, length);
         }
 
@@ -44,7 +43,6 @@ namespace MQTT.Types
 
         public Task<byte[]> ReadBytesOrFailAsync(int length)
         {
-            Debug.WriteLine("{0} : Reading {1} bytes", DateTime.Now.ToString("o"), length);
             return Stream.ReadBytesOrFailAsync(length);
         }
 

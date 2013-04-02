@@ -14,9 +14,9 @@ namespace MQTT.ConsoleApp
 {
     internal class Program
     {
-        private const string Server = "localhost"; // "test.mosquitto.org";
+        private const string Server = "test.mosquitto.org";
         private const int Port = 1883;
-        private static readonly string topic = Guid.NewGuid().ToString();
+        private static readonly string topic = "dn_sample";
 
         private static readonly ManualResetEvent waitForSubscribed = new ManualResetEvent(false);
         private static readonly object conLock = new object();
@@ -41,7 +41,7 @@ namespace MQTT.ConsoleApp
 
             for (int i = 0; i < listeners.Length; i++)
             {
-                listeners[i].Start(string.Format("{0}_LISTENER_{1}", topic, i));
+                listeners[i].Start(string.Format("{0}_L_{1}", topic, i));
             }
 
             writer.Join();
@@ -74,7 +74,7 @@ namespace MQTT.ConsoleApp
 
         private static void DoWriteAction()
         {
-            using (var c = new MqttClient(string.Format("{0}_WRITER_{1}", topic, Thread.CurrentThread.ManagedThreadId)))
+            using (var c = new MqttClient(string.Format("{0}_{1}", topic, Thread.CurrentThread.ManagedThreadId)))
             {
                 c.OnUnsolicitedMessage += c_OnUnsolicitedMessage;
 
@@ -119,11 +119,11 @@ namespace MQTT.ConsoleApp
             }
         }
 
-        private static void DoThreadAction(object name)
+        private static void DoThreadAction(object nameObj)
         {
-            string lname = string.Format("listener {0}", name);
+            string name = nameObj.ToString();
 
-            using (var c = new MqttClient(lname))
+            using (var c = new MqttClient(name))
             {
                 c.OnUnsolicitedMessage += (c_OnUnsolicitedMessage);
 
@@ -133,17 +133,17 @@ namespace MQTT.ConsoleApp
 
                 var test = new IPEndPoint(address, Port);
 
-                Console.WriteLine("{0} connecting...", lname);
+                Console.WriteLine("{0} connecting...", name);
                 DemandWorked(c.Connect(test));
-                Console.WriteLine("{0} connected...", lname);
+                Console.WriteLine("{0} connected...", name);
 
-                Console.WriteLine("{0} subscribing...", lname);
+                Console.WriteLine("{0} subscribing...", name);
                 DemandWorked(c.Subscribe(
                     new[]
                         {
                             new Subscription(topic, QualityOfService.AtLeastOnce),
                         }, null));
-                Console.WriteLine("{0} subscribed...", lname);
+                Console.WriteLine("{0} subscribed...", name);
 
                 waitForSubscribed.Set();
                 done.WaitOne(-1);
