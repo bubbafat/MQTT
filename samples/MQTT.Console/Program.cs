@@ -96,11 +96,11 @@ namespace MQTT.ConsoleApp
                 while (done.WaitOne(0) == false)
                 {
                     count++;
-                    // Console.WriteLine("WRITER writing...");
-                    c.Publish(topic, string.Format("This is message {0}!", count), QualityOfService.AtLeastOnce, null); // .Await();
-                    // Console.WriteLine("WRITER wrote...");
+                    string msg = string.Format("This is message {0}!", count);
+                    Console.WriteLine("WRITER: {0}", msg);
+                    c.Publish(topic, msg, QualityOfService.AtMostOnce, null); // .Await();
 
-                    Thread.Sleep(50);
+                    Thread.Sleep(2000);
                 }
 
                 c.Disconnect(TimeSpan.FromSeconds(5));
@@ -141,7 +141,7 @@ namespace MQTT.ConsoleApp
                 DemandWorked(c.Subscribe(
                     new[]
                         {
-                            new Subscription(topic, QualityOfService.AtLeastOnce),
+                            new Subscription(topic, QualityOfService.AtMostOnce),
                         }, null));
                 Console.WriteLine("{0} subscribed...", name);
 
@@ -153,7 +153,6 @@ namespace MQTT.ConsoleApp
 
         private static void c_OnUnsolicitedMessage(object sender, ClientCommandEventArgs e)
         {
-            return;
             MqttCommand command = e.Command;
 
             var p = command as Publish;
